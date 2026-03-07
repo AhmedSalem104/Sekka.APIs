@@ -1,0 +1,65 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Visual Studio
+.vs/
+*.rsuser
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## ASP.NET
+ScaffoldingReadMe.txt
+
+## User-specific
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+
+## Publish
+[Pp]ublish/
+[Pp]ublished/
+**/PublishProfiles/
+*.pubxml
+*.pubxml.user
+
+## Rider
+.idea/
+*.sln.iml
+
+## macOS
+.DS_Store
+
+## Secrets
+appsettings.Production.json
+firebase-credentials.json
+*.env
+
+## Uploads
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+
+## Claude Code
+.claude/
