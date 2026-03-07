@@ -1,0 +1,29 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=YOUR_SERVER;Database=YOUR_DB;User Id=YOUR_USER;Password=YOUR_PASSWORD;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;"
+  },
+
+  "Redis": {
+    "ConnectionString": "YOUR_REDIS_HOST:6379,password=YOUR_REDIS_PASSWORD,ssl=true,abortConnect=false,connectTimeout=10000,syncTimeout=10000,sslProtocols=tls12",
+    "InstanceName": "Sekka_"
+  },
+
+  "JwtSettings": {
+    "SecretKey": "YOUR_SECRET_KEY_MUST_BE_AT_LEAST_32_CHARS_LONG!!!"
+  },
+
+  "SmsProvider": {
+    "BaseUrl": "https://smssmartegypt.com/sms/api/",
+    "Username": "YOUR_SMS_USERNAME",
+    "Password": "YOUR_SMS_PASSWORD",
+    "SenderId": "YOUR_SENDER_ID"
+  },
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug",
+      "Microsoft.AspNetCore": "Information",
+      "Microsoft.EntityFrameworkCore": "Information"
+    }
+  }
+}

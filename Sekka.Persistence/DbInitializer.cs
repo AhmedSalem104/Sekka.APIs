@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Sekka.Persistence;
@@ -9,6 +10,13 @@ public static class DbInitializer
         var context = serviceProvider.GetRequiredService<SekkaDbContext>();
         await context.Database.EnsureCreatedAsync();
 
-        // TODO: Add seed data from JSON files (regions.json, vehicleTypes.json, etc.)
+        // Seed Roles
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        string[] roles = ["Driver", "Admin", "Support"];
+        foreach (var role in roles)
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole<Guid> { Name = role });
+        }
     }
 }

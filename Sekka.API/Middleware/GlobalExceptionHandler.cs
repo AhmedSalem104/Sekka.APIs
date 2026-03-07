@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Sekka.Core.Common;
+using Sekka.Core.Common.Messages;
 
 namespace Sekka.API.Middleware;
 
@@ -33,7 +34,7 @@ public class GlobalExceptionHandler
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-        var response = ApiResponse<object>.Fail("حدث خطأ غير متوقع. يرجى المحاولة لاحقاً.");
+        var response = ApiResponse<object>.Fail(ErrorMessages.UnexpectedError);
 
         var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));

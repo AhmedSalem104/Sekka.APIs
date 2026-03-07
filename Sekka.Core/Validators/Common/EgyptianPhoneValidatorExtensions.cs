@@ -1,5 +1,6 @@
 using FluentValidation;
 using Sekka.Core.Common;
+using Sekka.Core.Common.Messages;
 
 namespace Sekka.Core.Validators.Common;
 
@@ -14,7 +15,7 @@ public static class EgyptianPhoneValidatorExtensions
     {
         return ruleBuilder
             .Must(phone => string.IsNullOrEmpty(phone) || EgyptianPhoneHelper.IsMobile(phone))
-            .WithMessage("رقم موبايل مصري غير صالح — يجب أن يبدأ بـ 010, 011, 012, أو 015 (11 رقم)")
+            .WithMessage(ErrorMessages.InvalidEgyptianPhone)
             .WithErrorCode("INVALID_EGYPTIAN_MOBILE");
     }
 }

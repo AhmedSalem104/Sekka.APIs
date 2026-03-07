@@ -10,10 +10,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Sekka.API.Middleware;
 using Sekka.Core.Interfaces.Persistence;
+using Sekka.Core.Interfaces.Services;
 using Sekka.Infrastructure;
 using Sekka.Infrastructure.Repositories;
 using Sekka.Persistence;
+using Sekka.Persistence.Entities;
 using Sekka.Persistence.Interceptors;
+using Sekka.Application.Services;
+using Sekka.AdminControlDashboard.Services;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +33,7 @@ builder.Services.AddDbContext<SekkaDbContext>((sp, options) =>
     options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
 });
 
-builder.Services.AddIdentity<IdentityUser<Guid>, IdentityRole<Guid>>()
+builder.Services.AddIdentity<Driver, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<SekkaDbContext>()
     .AddDefaultTokenProviders();
 
@@ -95,12 +100,30 @@ builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericReposito
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // ══════════════════════════════════════════════════════════════
-// 6. Application Services
-// — Register individual services here as they are implemented —
+// 6. Application Services (Phase 1 — Auth & Identity)
 // ══════════════════════════════════════════════════════════════
-// builder.Services.AddScoped<IAuthService, AuthService>();
-// builder.Services.AddScoped<IOrderService, OrderService>();
-// ... (individual service registration per ISP principle)
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration["Redis:ConnectionString"];
+    options.InstanceName = builder.Configuration["Redis:InstanceName"];
+});
+
+// Auth & Identity
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpClient<ISmsService, SmsService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IDriverPreferencesService, DriverPreferencesService>();
+builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
+builder.Services.AddScoped<IDataPrivacyService, DataPrivacyService>();
+builder.Services.AddScoped<IDemoService, DemoService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IBadgeService, BadgeService>();
+builder.Services.AddScoped<IHealthScoreService, HealthScoreService>();
+
+// Admin Services
+builder.Services.AddScoped<IAdminDriversService, AdminDriversService>();
+builder.Services.AddScoped<IAdminRolesService, AdminRolesService>();
+builder.Services.AddScoped<IAdminSubscriptionsService, AdminSubscriptionsService>();
 
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
@@ -183,7 +206,12 @@ builder.Services.AddCors(options =>
 });
 
 // ══════════════════════════════════════════════════════════════
-// 13. Swagger + Controllers
+// 13. FluentValidation
+// ══════════════════════════════════════════════════════════════
+builder.Services.AddValidatorsFromAssemblyContaining<Sekka.Core.Validators.Auth.SendOtpDtoValidator>();
+
+// ══════════════════════════════════════════════════════════════
+// 14. Swagger + Controllers
 // ══════════════════════════════════════════════════════════════
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -233,7 +261,10 @@ app.Use(async (context, next) =>
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.DefaultModelsExpandDepth(-1);
+    });
 }
 
 // Phase 3: ASP.NET Core Built-in Pipeline

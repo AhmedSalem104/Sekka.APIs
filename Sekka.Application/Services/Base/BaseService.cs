@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Sekka.Core.Common;
+using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Common;
 using Sekka.Core.Interfaces.Persistence;
 using Sekka.Core.Specifications;
@@ -37,7 +38,7 @@ public abstract class BaseService<TEntity, TDto, TCreateDto, TUpdateDto>
     public virtual async Task<Result<TDto>> GetByIdAsync(Guid id)
     {
         var entity = await _repo.GetByIdAsync(id);
-        if (entity is null) return Result<TDto>.NotFound("العنصر غير موجود");
+        if (entity is null) return Result<TDto>.NotFound(ErrorMessages.ItemNotFound);
         return Result<TDto>.Success(_mapper.Map<TDto>(entity));
     }
 
@@ -53,7 +54,7 @@ public abstract class BaseService<TEntity, TDto, TCreateDto, TUpdateDto>
     public virtual async Task<Result<TDto>> UpdateAsync(Guid id, TUpdateDto dto)
     {
         var entity = await _repo.GetByIdAsync(id);
-        if (entity is null) return Result<TDto>.NotFound("العنصر غير موجود");
+        if (entity is null) return Result<TDto>.NotFound(ErrorMessages.ItemNotFound);
         _mapper.Map(dto, entity);
         entity.UpdatedAt = DateTime.UtcNow;
         _repo.Update(entity);
@@ -64,7 +65,7 @@ public abstract class BaseService<TEntity, TDto, TCreateDto, TUpdateDto>
     public virtual async Task<Result<bool>> SoftDeleteAsync(Guid id)
     {
         var entity = await _repo.GetByIdAsync(id);
-        if (entity is null) return Result<bool>.NotFound("العنصر غير موجود");
+        if (entity is null) return Result<bool>.NotFound(ErrorMessages.ItemNotFound);
 
         if (entity is SoftDeletableEntity<Guid> softDeletable)
         {

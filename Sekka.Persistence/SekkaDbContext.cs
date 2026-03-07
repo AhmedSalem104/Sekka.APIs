@@ -1,15 +1,24 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Sekka.Persistence.Entities;
 using Sekka.Persistence.Entities.Base;
 
 namespace Sekka.Persistence;
 
-public class SekkaDbContext : IdentityDbContext<IdentityUser<Guid>, IdentityRole<Guid>, Guid>
+public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid>
 {
     public SekkaDbContext(DbContextOptions<SekkaDbContext> options) : base(options)
     {
     }
+
+    public DbSet<Driver> Drivers => Set<Driver>();
+    public DbSet<DriverPreferences> DriverPreferences => Set<DriverPreferences>();
+    public DbSet<NotificationChannelPreference> NotificationChannelPreferences => Set<NotificationChannelPreference>();
+    public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
+    public DbSet<ActiveSession> ActiveSessions => Set<ActiveSession>();
+    public DbSet<UserConsent> UserConsents => Set<UserConsent>();
+    public DbSet<DataDeletionRequest> DataDeletionRequests => Set<DataDeletionRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
