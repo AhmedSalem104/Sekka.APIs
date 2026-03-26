@@ -56,6 +56,15 @@ public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid
     public DbSet<RefundRequest> RefundRequests => Set<RefundRequest>();
     public DbSet<SurgePricingRule> SurgePricingRules => Set<SurgePricingRule>();
 
+    // Phase 5: Communication
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<QuickMessageTemplate> QuickMessageTemplates => Set<QuickMessageTemplate>();
+    public DbSet<SOSLog> SOSLogs => Set<SOSLog>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

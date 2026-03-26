@@ -167,6 +167,15 @@ builder.Services.AddScoped<IRefundService, RefundService>();
 builder.Services.AddScoped<IDisputeService, DisputeService>();
 builder.Services.AddScoped<ISurgePricingService, SurgePricingService>();
 
+// Phase 5 — Communication Services
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IFirebaseService, FirebaseService>();
+builder.Services.AddScoped<ISOSService, SOSService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IMessageTemplateService, MessageTemplateService>();
+builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+builder.Services.AddScoped<INotificationDispatchService, NotificationDispatchService>();
+
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
 // ══════════════════════════════════════════════════════════════
@@ -325,6 +334,6 @@ app.MapHealthChecks("/health");
 app.MapHub<Sekka.API.Hubs.OrderTrackingHub>("/hubs/tracking");
 app.MapHub<Sekka.API.Hubs.NotificationHub>("/hubs/notifications");
 app.MapHub<Sekka.API.Hubs.CashAlertHub>("/hubs/cash-alerts");
-// app.MapHub<ChatHub>("/hubs/chat");
+app.MapHub<Sekka.API.Hubs.ChatHub>("/hubs/chat");
 
 app.Run();

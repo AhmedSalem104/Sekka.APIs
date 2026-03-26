@@ -118,4 +118,21 @@ public static class SuccessMessages
     public static string WalletFrozenSuccess => "تم تجميد المحفظة بنجاح";
     public static string WalletUnfrozen => "تم إلغاء تجميد المحفظة بنجاح";
     public static string BulkAdjustmentCompleted => "تم التعديل الجماعي بنجاح";
+
+    // ── Communication ──
+    public static string NotificationRead => "تم تعليم الإشعار كمقروء";
+    public static string AllNotificationsRead => "تم تعليم كل الإشعارات كمقروءة";
+    public static string SOSActivated => "تم تفعيل حالة الطوارئ";
+    public static string SOSDismissed => "تم إلغاء حالة الطوارئ";
+    public static string SOSResolved => "تم حل حالة الطوارئ";
+    public static string SOSAcknowledged => "تم تأكيد استلام البلاغ";
+    public static string SOSEscalated => "تم تصعيد البلاغ";
+    public static string TemplateCreated => "تم إنشاء القالب بنجاح";
+    public static string TemplateUpdated => "تم تحديث القالب بنجاح";
+    public static string TemplateDeleted => "تم حذف القالب بنجاح";
+    public static string ConversationCreated => "تم إنشاء المحادثة بنجاح";
+    public static string ConversationClosedSuccess => "تم إغلاق المحادثة بنجاح";
+    public static string MessageSent => "تم إرسال الرسالة بنجاح";
+    public static string MessageReadSuccess => "تم تعليم الرسالة كمقروءة";
+    public static string BroadcastSent => "تم إرسال الإشعار الجماعي بنجاح";
 }

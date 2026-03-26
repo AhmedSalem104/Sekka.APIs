@@ -91,5 +91,13 @@ public class ApplicationMappingProfile : Profile
         CreateMap<InvoiceItem, Core.DTOs.Wallet.InvoiceItemDto>();
         CreateMap<RefundRequest, Core.DTOs.Wallet.RefundDto>();
         CreateMap<SurgePricingRule, object>(); // placeholder
+
+        // ── Phase 5: Communication ──
+        CreateMap<Notification, Core.DTOs.Communication.NotificationDto>();
+        CreateMap<SOSLog, Core.DTOs.Communication.SOSLogDto>();
+        CreateMap<QuickMessageTemplate, Core.DTOs.Communication.MessageTemplateDto>();
+        CreateMap<Conversation, Core.DTOs.Communication.ConversationDto>();
+        CreateMap<ChatMessage, Core.DTOs.Communication.ChatMessageDto>();
+        CreateMap<DeviceToken, object>(); // placeholder
     }
 }

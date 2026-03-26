@@ -119,4 +119,13 @@ public static class ErrorMessages
     public static string RefundAlreadyProcessed => "طلب الاسترداد تمت معالجته بالفعل";
     public static string SurgePricingRuleNotFound => "قاعدة التسعير غير موجودة";
     public static string DailyStatsNotFound => "إحصائيات اليوم غير موجودة";
+
+    // ── Communication ──
+    public static string NotificationNotFound => "الإشعار غير موجود";
+    public static string SOSNotFound => "بلاغ الطوارئ غير موجود";
+    public static string SOSAlreadyResolved => "بلاغ الطوارئ تم حله بالفعل";
+    public static string ConversationNotFound => "المحادثة غير موجودة";
+    public static string ConversationClosed => "المحادثة مغلقة";
+    public static string MessageTemplateNotFound => "قالب الرسالة غير موجود";
+    public static string CannotDeleteSystemTemplate => "لا يمكن حذف قالب النظام";
 }

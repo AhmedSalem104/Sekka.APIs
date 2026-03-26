@@ -54,4 +54,11 @@ public class Driver : IdentityUser<Guid>
     public ICollection<OrderDispute> OrderDisputes { get; set; } = new List<OrderDispute>();
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
     public ICollection<RefundRequest> RefundRequests { get; set; } = new List<RefundRequest>();
+
+    // Phase 5: Communication
+    public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public ICollection<DeviceToken> DeviceTokens { get; set; } = new List<DeviceToken>();
+    public ICollection<QuickMessageTemplate> MessageTemplates { get; set; } = new List<QuickMessageTemplate>();
+    public ICollection<SOSLog> SOSLogs { get; set; } = new List<SOSLog>();
+    public ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
 }
