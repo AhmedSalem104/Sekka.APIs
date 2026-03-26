@@ -34,6 +34,16 @@ public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid
     public DbSet<TrackingLink> TrackingLinks => Set<TrackingLink>();
     public DbSet<DeliveryTimeSlot> DeliveryTimeSlots => Set<DeliveryTimeSlot>();
 
+    // Phase 3: Customers & Partners
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Address> Addresses => Set<Address>();
+    public DbSet<Rating> Ratings => Set<Rating>();
+    public DbSet<CallerIdNote> CallerIdNotes => Set<CallerIdNote>();
+    public DbSet<BlockedCustomer> BlockedCustomers => Set<BlockedCustomer>();
+    public DbSet<Partner> Partners => Set<Partner>();
+    public DbSet<PickupPoint> PickupPoints => Set<PickupPoint>();
+    public DbSet<CommunityBlacklist> CommunityBlacklist => Set<CommunityBlacklist>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

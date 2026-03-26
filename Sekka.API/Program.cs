@@ -147,6 +147,14 @@ builder.Services.AddScoped<ISmartAddressService, SmartAddressService>();
 builder.Services.AddScoped<IVoiceMemoService, VoiceMemoService>();
 builder.Services.AddScoped<IOrderSourceService, OrderSourceService>();
 
+// Phase 3 — Customers & Partners Services
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<ICallerIdService, CallerIdService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IPartnerService, PartnerService>();
+builder.Services.AddScoped<IPickupPointService, PickupPointService>();
+builder.Services.AddScoped<IPartnerPortalService, PartnerPortalService>();
+
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
 // ══════════════════════════════════════════════════════════════

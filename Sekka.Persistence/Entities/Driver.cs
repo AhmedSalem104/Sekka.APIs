@@ -36,4 +36,12 @@ public class Driver : IdentityUser<Guid>
     public ICollection<Order> Orders { get; set; } = new List<Order>();
     public ICollection<VoiceMemo> VoiceMemos { get; set; } = new List<VoiceMemo>();
     public ICollection<SyncQueue> SyncQueues { get; set; } = new List<SyncQueue>();
+
+    // Phase 3: Customers & Partners
+    public ICollection<Customer> Customers { get; set; } = new List<Customer>();
+    public ICollection<Partner> Partners { get; set; } = new List<Partner>();
+    public ICollection<Address> Addresses { get; set; } = new List<Address>();
+    public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+    public ICollection<CallerIdNote> CallerIdNotes { get; set; } = new List<CallerIdNote>();
+    public ICollection<BlockedCustomer> BlockedCustomers { get; set; } = new List<BlockedCustomer>();
 }

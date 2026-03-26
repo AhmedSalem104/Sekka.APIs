@@ -90,4 +90,16 @@ public static class ErrorMessages
     public static string SyncConflict => "يوجد تعارض في المزامنة";
     public static string AmountRange => "المبلغ يجب أن يكون بين 0 و 999,999";
     public static string DeliveryAddressRequired => "عنوان التسليم مطلوب";
+
+    // ── Customers & Partners ──
+    public static string CustomerNotFound => "العميل غير موجود";
+    public static string CustomerAlreadyBlocked => "العميل محظور بالفعل";
+    public static string CustomerNotBlocked => "العميل غير محظور";
+    public static string PartnerNotFound => "الشريك غير موجود";
+    public static string PartnerAlreadyVerified => "الشريك تم التحقق منه بالفعل";
+    public static string PartnerVerificationPending => "طلب التحقق قيد المراجعة";
+    public static string AddressNotFound => "العنوان غير موجود";
+    public static string CallerIdNotFound => "هوية المتصل غير موجودة";
+    public static string PickupPointNotFound => "نقطة الاستلام غير موجودة";
+    public static string BlacklistEntryNotFound => "الرقم غير موجود في القائمة السوداء";
 }

@@ -42,5 +42,30 @@ public class ApplicationMappingProfile : Profile
         // ── Sync ──
         CreateMap<SyncQueue, SyncChangeDto>()
             .ForMember(d => d.LocalTimestamp, opt => opt.MapFrom(s => s.CreatedAt));
+
+        // ── Phase 3: Customers & Partners ──
+        CreateMap<Customer, Core.DTOs.Customer.CustomerDto>();
+        CreateMap<Customer, Core.DTOs.Customer.CustomerListDto>();
+        CreateMap<Customer, Core.DTOs.Customer.CustomerDetailDto>();
+        CreateMap<Address, Core.DTOs.Customer.AddressDto>();
+        CreateMap<Core.DTOs.Customer.SaveAddressDto, Address>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.DriverId, opt => opt.Ignore());
+        CreateMap<Rating, Core.DTOs.Customer.RatingDto>();
+        CreateMap<CallerIdNote, Core.DTOs.Customer.CallerIdNoteDto>();
+        CreateMap<CallerIdNote, Core.DTOs.Customer.CallerIdDto>();
+        CreateMap<BlockedCustomer, Core.DTOs.Admin.BlacklistEntryDto>();
+        CreateMap<Partner, Core.DTOs.Partner.PartnerDto>();
+        CreateMap<Core.DTOs.Partner.CreatePartnerDto, Partner>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.DriverId, opt => opt.Ignore());
+        CreateMap<Partner, Core.DTOs.Partner.PartnerVerificationDto>()
+            .ForMember(d => d.Status, opt => opt.MapFrom(s => s.VerificationStatus))
+            .ForMember(d => d.DocumentUrl, opt => opt.MapFrom(s => s.VerificationDocumentUrl))
+            .ForMember(d => d.Note, opt => opt.MapFrom(s => s.VerificationNote));
+        CreateMap<PickupPoint, Core.DTOs.Partner.PickupPointDto>();
+        CreateMap<Core.DTOs.Partner.CreatePickupPointDto, PickupPoint>()
+            .ForMember(d => d.Id, opt => opt.Ignore());
+        CreateMap<CommunityBlacklist, Core.DTOs.Admin.BlacklistEntryDto>();
     }
 }

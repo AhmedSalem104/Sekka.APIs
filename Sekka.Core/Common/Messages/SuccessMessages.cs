@@ -70,4 +70,27 @@ public static class SuccessMessages
     public static string TimeSlotUpdated => "تم تحديث الفترة الزمنية بنجاح";
     public static string TimeSlotDeleted => "تم حذف الفترة الزمنية بنجاح";
     public static string SyncCompleted => "تم المزامنة بنجاح";
+
+    // ── Customers & Partners ──
+    public static string CustomerUpdated => "تم تحديث بيانات العميل بنجاح";
+    public static string CustomerRated => "تم تقييم العميل بنجاح";
+    public static string CustomerBlocked => "تم حظر العميل بنجاح";
+    public static string CustomerUnblocked => "تم إلغاء حظر العميل بنجاح";
+    public static string CallerIdSaved => "تم حفظ هوية المتصل بنجاح";
+    public static string CallerIdUpdated => "تم تحديث هوية المتصل بنجاح";
+    public static string CallerIdDeleted => "تم حذف هوية المتصل بنجاح";
+    public static string AddressSaved => "تم حفظ العنوان بنجاح";
+    public static string AddressUpdated => "تم تحديث العنوان بنجاح";
+    public static string AddressDeleted => "تم حذف العنوان بنجاح";
+    public static string PartnerCreated => "تم إضافة الشريك بنجاح";
+    public static string PartnerUpdated => "تم تحديث الشريك بنجاح";
+    public static string PartnerDeleted => "تم حذف الشريك بنجاح";
+    public static string PartnerVerificationSubmitted => "تم رفع مستند التحقق بنجاح";
+    public static string PartnerVerified => "تم التحقق من الشريك بنجاح";
+    public static string PickupPointCreated => "تم إضافة نقطة الاستلام بنجاح";
+    public static string PickupPointUpdated => "تم تحديث نقطة الاستلام بنجاح";
+    public static string PickupPointDeleted => "تم حذف نقطة الاستلام بنجاح";
+    public static string PickupPointRated => "تم تقييم نقطة الاستلام بنجاح";
+    public static string BlacklistVerified => "تم تأكيد البلاغ بنجاح";
+    public static string BlacklistRemoved => "تم إزالة الرقم من القائمة السوداء بنجاح";
 }
