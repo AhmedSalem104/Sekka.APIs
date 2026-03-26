@@ -46,4 +46,28 @@ public static class SuccessMessages
     public static string StepProfilePhoto => "صورة البروفايل";
     public static string StepEmail => "البريد الإلكتروني";
     public static string StepDefaultRegion => "المنطقة الافتراضية";
+
+    // ── Orders ──
+    public static string OrderCreated => "تم إنشاء الطلب بنجاح";
+    public static string OrderUpdated => "تم تحديث الطلب بنجاح";
+    public static string OrderDeleted => "تم حذف الطلب بنجاح";
+    public static string OrderStatusUpdated => "تم تحديث حالة الطلب بنجاح";
+    public static string OrderDelivered => "تم تسليم الطلب بنجاح";
+    public static string OrderFailed => "تم تسجيل محاولة التسليم الفاشلة";
+    public static string OrderCancelled => "تم إلغاء الطلب بنجاح";
+    public static string OrderTransferred => "تم تحويل الطلب بنجاح";
+    public static string OrderPartialDelivery => "تم تسجيل التسليم الجزئي بنجاح";
+    public static string BulkImportCompleted => "تم استيراد الطلبات بنجاح";
+    public static string PhotoUploaded => "تم رفع صورة التوثيق بنجاح";
+    public static string AddressSwapped => "تم تغيير العنوان بنجاح";
+    public static string WaitingTimerStarted => "تم بدء مؤقت الانتظار";
+    public static string WaitingTimerStopped => "تم إيقاف مؤقت الانتظار";
+    public static string RouteOptimized => "تم تحسين المسار بنجاح";
+    public static string RouteReordered => "تم إعادة ترتيب المسار بنجاح";
+    public static string OrderAssigned => "تم تعيين الطلب للسائق بنجاح";
+    public static string TimeSlotBooked => "تم حجز الفترة الزمنية بنجاح";
+    public static string TimeSlotCreated => "تم إنشاء الفترة الزمنية بنجاح";
+    public static string TimeSlotUpdated => "تم تحديث الفترة الزمنية بنجاح";
+    public static string TimeSlotDeleted => "تم حذف الفترة الزمنية بنجاح";
+    public static string SyncCompleted => "تم المزامنة بنجاح";
 }

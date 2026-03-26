@@ -91,7 +91,9 @@ builder.Services.AddSignalR();
 // ══════════════════════════════════════════════════════════════
 // 4. AutoMapper
 // ══════════════════════════════════════════════════════════════
-builder.Services.AddAutoMapper(cfg => { }, typeof(Sekka.Core.Mapping.MappingProfile).Assembly);
+builder.Services.AddAutoMapper(cfg => { },
+    typeof(Sekka.Core.Mapping.MappingProfile).Assembly,
+    typeof(Sekka.Application.Mapping.ApplicationMappingProfile).Assembly);
 
 // ══════════════════════════════════════════════════════════════
 // 5. Repository + UnitOfWork
@@ -124,6 +126,23 @@ builder.Services.AddScoped<IHealthScoreService, HealthScoreService>();
 builder.Services.AddScoped<IAdminDriversService, AdminDriversService>();
 builder.Services.AddScoped<IAdminRolesService, AdminRolesService>();
 builder.Services.AddScoped<IAdminSubscriptionsService, AdminSubscriptionsService>();
+
+// Phase 2 — Orders & Delivery Services
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<ICancellationService, CancellationService>();
+builder.Services.AddScoped<IOrderTransferService, OrderTransferService>();
+builder.Services.AddScoped<IBulkImportService, BulkImportService>();
+builder.Services.AddScoped<IDuplicateDetectionService, DuplicateDetectionService>();
+builder.Services.AddScoped<IOrderWorthService, OrderWorthService>();
+builder.Services.AddScoped<IAddressSwapService, AddressSwapService>();
+builder.Services.AddScoped<IWaitingTimerService, WaitingTimerService>();
+builder.Services.AddScoped<IRouteService, RouteService>();
+builder.Services.AddScoped<IRecurringOrderService, RecurringOrderService>();
+builder.Services.AddScoped<ISyncService, SyncService>();
+builder.Services.AddScoped<ITimelineService, TimelineService>();
+builder.Services.AddScoped<ITrackingLinkService, TrackingLinkService>();
+builder.Services.AddScoped<IAutoAssignmentService, AutoAssignmentService>();
+builder.Services.AddScoped<ITimeSlotService, TimeSlotService>();
 
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
@@ -279,8 +298,8 @@ app.MapControllers();
 // Health Checks
 app.MapHealthChecks("/health");
 
-// SignalR Hubs — map as hubs are implemented
-// app.MapHub<OrderTrackingHub>("/hubs/tracking");
+// SignalR Hubs
+app.MapHub<Sekka.API.Hubs.OrderTrackingHub>("/hubs/tracking");
 // app.MapHub<NotificationHub>("/hubs/notifications");
 // app.MapHub<CashAlertHub>("/hubs/cash-alerts");
 // app.MapHub<ChatHub>("/hubs/chat");

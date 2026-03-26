@@ -6,9 +6,7 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        // Entity → DTO mappings will be added here as entities and DTOs are created
-        // Example:
-        // CreateMap<Order, OrderDto>();
-        // CreateMap<CreateOrderDto, Order>();
+        // Entity → DTO mappings are registered in Sekka.Application.Mapping.ApplicationMappingProfile
+        // This profile is kept for any Core-level mappings (DTO → DTO transformations)
     }
 }

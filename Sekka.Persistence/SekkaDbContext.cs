@@ -20,6 +20,20 @@ public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid
     public DbSet<UserConsent> UserConsents => Set<UserConsent>();
     public DbSet<DataDeletionRequest> DataDeletionRequests => Set<DataDeletionRequest>();
 
+    // Phase 2: Orders & Delivery
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<DeliveryAttempt> DeliveryAttempts => Set<DeliveryAttempt>();
+    public DbSet<OrderPhoto> OrderPhotos => Set<OrderPhoto>();
+    public DbSet<AddressSwapLog> AddressSwapLogs => Set<AddressSwapLog>();
+    public DbSet<CancellationLog> CancellationLogs => Set<CancellationLog>();
+    public DbSet<OrderSourceTag> OrderSourceTags => Set<OrderSourceTag>();
+    public DbSet<WaitingTimer> WaitingTimers => Set<WaitingTimer>();
+    public DbSet<OrderTransferLog> OrderTransferLogs => Set<OrderTransferLog>();
+    public DbSet<VoiceMemo> VoiceMemos => Set<VoiceMemo>();
+    public DbSet<SyncQueue> SyncQueues => Set<SyncQueue>();
+    public DbSet<TrackingLink> TrackingLinks => Set<TrackingLink>();
+    public DbSet<DeliveryTimeSlot> DeliveryTimeSlots => Set<DeliveryTimeSlot>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

@@ -69,4 +69,25 @@ public static class ErrorMessages
 
     // ── Profile Completion ──
     public static string DefaultDriverName => "سائق جديد";
+
+    // ── Orders ──
+    public static string OrderNotFound => "الطلب غير موجود";
+    public static string InvalidOrderStatus => "حالة الطلب غير صالحة لهذه العملية";
+    public static string DuplicateOrder => "طلب مكرر — يوجد طلب مشابه بالفعل";
+    public static string OrderAlreadyDelivered => "الطلب تم تسليمه بالفعل";
+    public static string OrderAlreadyCancelled => "الطلب ملغي بالفعل";
+    public static string CannotCancelDelivered => "لا يمكن إلغاء طلب تم تسليمه";
+    public static string NoActiveRoute => "لا يوجد مسار نشط";
+    public static string TrackingLinkExpired => "رابط التتبع منتهي الصلاحية";
+    public static string TrackingLinkNotFound => "رابط التتبع غير موجود";
+    public static string TimeSlotNotFound => "الفترة الزمنية غير موجودة";
+    public static string TimeSlotFull => "الفترة الزمنية ممتلئة";
+    public static string WaitingTimerNotActive => "مؤقت الانتظار غير نشط";
+    public static string TransferNotFound => "طلب التحويل غير موجود";
+    public static string BulkImportEmpty => "لم يتم العثور على طلبات في النص";
+    public static string InvalidIdempotencyKey => "مفتاح منع التكرار مستخدم بالفعل";
+    public static string OcrScanFailed => "فشل مسح الفاتورة";
+    public static string SyncConflict => "يوجد تعارض في المزامنة";
+    public static string AmountRange => "المبلغ يجب أن يكون بين 0 و 999,999";
+    public static string DeliveryAddressRequired => "عنوان التسليم مطلوب";
 }

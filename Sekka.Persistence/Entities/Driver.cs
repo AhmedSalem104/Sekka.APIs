@@ -33,4 +33,7 @@ public class Driver : IdentityUser<Guid>
     public ICollection<AccountDeletionRequest> AccountDeletionRequests { get; set; } = new List<AccountDeletionRequest>();
     public ICollection<UserConsent> UserConsents { get; set; } = new List<UserConsent>();
     public ICollection<DataDeletionRequest> DataDeletionRequests { get; set; } = new List<DataDeletionRequest>();
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
+    public ICollection<VoiceMemo> VoiceMemos { get; set; } = new List<VoiceMemo>();
+    public ICollection<SyncQueue> SyncQueues { get; set; } = new List<SyncQueue>();
 }
