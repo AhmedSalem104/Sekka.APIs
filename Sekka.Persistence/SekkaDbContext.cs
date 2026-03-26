@@ -65,6 +65,14 @@ public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
 
+    // Phase 6: Location & Vehicles
+    public DbSet<Route> Routes => Set<Route>();
+    public DbSet<ParkingSpot> ParkingSpots => Set<ParkingSpot>();
+    public DbSet<LocationHistory> LocationHistories => Set<LocationHistory>();
+    public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+    public DbSet<MaintenanceRecord> MaintenanceRecords => Set<MaintenanceRecord>();
+    public DbSet<BreakLog> BreakLogs => Set<BreakLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

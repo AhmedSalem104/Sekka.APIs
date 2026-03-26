@@ -135,4 +135,16 @@ public static class SuccessMessages
     public static string MessageSent => "تم إرسال الرسالة بنجاح";
     public static string MessageReadSuccess => "تم تعليم الرسالة كمقروءة";
     public static string BroadcastSent => "تم إرسال الإشعار الجماعي بنجاح";
+
+    // ── Location & Vehicles ──
+    public static string VehicleCreated => "تم إضافة المركبة بنجاح";
+    public static string VehicleUpdated => "تم تحديث المركبة بنجاح";
+    public static string VehicleDeleted => "تم حذف المركبة بنجاح";
+    public static string VehicleApproved => "تم الموافقة على المركبة";
+    public static string VehicleRejected => "تم رفض المركبة";
+    public static string MaintenanceRecorded => "تم تسجيل الصيانة بنجاح";
+    public static string ParkingSpotSaved => "تم حفظ مكان الركنة بنجاح";
+    public static string ParkingSpotDeleted => "تم حذف مكان الركنة";
+    public static string BreakStarted => "تم بدء الاستراحة";
+    public static string BreakEnded => "تم إنهاء الاستراحة";
 }

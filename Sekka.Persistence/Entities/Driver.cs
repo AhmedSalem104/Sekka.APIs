@@ -61,4 +61,10 @@ public class Driver : IdentityUser<Guid>
     public ICollection<QuickMessageTemplate> MessageTemplates { get; set; } = new List<QuickMessageTemplate>();
     public ICollection<SOSLog> SOSLogs { get; set; } = new List<SOSLog>();
     public ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
+
+    // Phase 6: Location & Vehicles
+    public ICollection<Route> Routes { get; set; } = new List<Route>();
+    public ICollection<ParkingSpot> ParkingSpots { get; set; } = new List<ParkingSpot>();
+    public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+    public ICollection<BreakLog> BreakLogs { get; set; } = new List<BreakLog>();
 }

@@ -176,6 +176,12 @@ builder.Services.AddScoped<IMessageTemplateService, MessageTemplateService>();
 builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 builder.Services.AddScoped<INotificationDispatchService, NotificationDispatchService>();
 
+// Phase 6 — Location & Vehicles Services
+builder.Services.AddScoped<IParkingSpotService, ParkingSpotService>();
+builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<IBreakService, BreakService>();
+builder.Services.AddScoped<IAdminVehicleService, AdminVehicleService>();
+
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
 // ══════════════════════════════════════════════════════════════

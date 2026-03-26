@@ -128,4 +128,13 @@ public static class ErrorMessages
     public static string ConversationClosed => "المحادثة مغلقة";
     public static string MessageTemplateNotFound => "قالب الرسالة غير موجود";
     public static string CannotDeleteSystemTemplate => "لا يمكن حذف قالب النظام";
+
+    // ── Location & Vehicles ──
+    public static string VehicleNotFound => "المركبة غير موجودة";
+    public static string VehicleAlreadyApproved => "المركبة موافق عليها بالفعل";
+    public static string ParkingSpotNotFound => "مكان الركنة غير موجود";
+    public static string BreakAlreadyActive => "يوجد استراحة نشطة بالفعل";
+    public static string NoActiveBreak => "لا توجد استراحة نشطة";
+    public static string MaintenanceNotFound => "سجل الصيانة غير موجود";
+    public static string RouteNotFound => "المسار غير موجود";
 }

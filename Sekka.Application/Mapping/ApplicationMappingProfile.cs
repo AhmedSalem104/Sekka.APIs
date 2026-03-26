@@ -99,5 +99,15 @@ public class ApplicationMappingProfile : Profile
         CreateMap<Conversation, Core.DTOs.Communication.ConversationDto>();
         CreateMap<ChatMessage, Core.DTOs.Communication.ChatMessageDto>();
         CreateMap<DeviceToken, object>(); // placeholder
+
+        // ── Phase 6: Location & Vehicles ──
+        CreateMap<Vehicle, Core.DTOs.Vehicle.VehicleDto>();
+        CreateMap<Core.DTOs.Vehicle.CreateVehicleDto, Vehicle>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.DriverId, opt => opt.Ignore());
+        CreateMap<MaintenanceRecord, Core.DTOs.Vehicle.MaintenanceRecordDto>();
+        CreateMap<ParkingSpot, Core.DTOs.Vehicle.ParkingSpotDto>();
+        CreateMap<BreakLog, Core.DTOs.Vehicle.BreakLogDto>();
+        CreateMap<Route, Core.DTOs.Route.RouteDto>();
     }
 }
