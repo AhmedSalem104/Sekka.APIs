@@ -44,4 +44,14 @@ public class Driver : IdentityUser<Guid>
     public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
     public ICollection<CallerIdNote> CallerIdNotes { get; set; } = new List<CallerIdNote>();
     public ICollection<BlockedCustomer> BlockedCustomers { get; set; } = new List<BlockedCustomer>();
+
+    // Phase 4: Financial
+    public ICollection<WalletTransaction> WalletTransactions { get; set; } = new List<WalletTransaction>();
+    public ICollection<Settlement> Settlements { get; set; } = new List<Settlement>();
+    public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+    public ICollection<PaymentRequest> PaymentRequests { get; set; } = new List<PaymentRequest>();
+    public ICollection<DailyStats> DailyStats { get; set; } = new List<DailyStats>();
+    public ICollection<OrderDispute> OrderDisputes { get; set; } = new List<OrderDispute>();
+    public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+    public ICollection<RefundRequest> RefundRequests { get; set; } = new List<RefundRequest>();
 }

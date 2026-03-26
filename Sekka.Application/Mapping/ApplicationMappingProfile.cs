@@ -67,5 +67,23 @@ public class ApplicationMappingProfile : Profile
         CreateMap<Core.DTOs.Partner.CreatePickupPointDto, PickupPoint>()
             .ForMember(d => d.Id, opt => opt.Ignore());
         CreateMap<CommunityBlacklist, Core.DTOs.Admin.BlacklistEntryDto>();
+
+        // ── Phase 4: Financial ──
+        CreateMap<WalletTransaction, Core.DTOs.Wallet.WalletTransactionDto>();
+        CreateMap<Settlement, Core.DTOs.Settlement.SettlementDto>();
+        CreateMap<Core.DTOs.Settlement.CreateSettlementDto, Settlement>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.DriverId, opt => opt.Ignore());
+        CreateMap<Expense, Core.DTOs.Wallet.ExpenseDto>();
+        CreateMap<Core.DTOs.Wallet.CreateExpenseDto, Expense>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.DriverId, opt => opt.Ignore());
+        CreateMap<PaymentRequest, Core.DTOs.Wallet.PaymentRequestDto>();
+        CreateMap<DailyStats, Core.DTOs.Analytics.DailyStatsDto>();
+        CreateMap<OrderDispute, Core.DTOs.Wallet.DisputeDto>();
+        CreateMap<Invoice, Core.DTOs.Wallet.InvoiceDto>();
+        CreateMap<InvoiceItem, Core.DTOs.Wallet.InvoiceItemDto>();
+        CreateMap<RefundRequest, Core.DTOs.Wallet.RefundDto>();
+        CreateMap<SurgePricingRule, object>(); // placeholder
     }
 }

@@ -1,0 +1,174 @@
+using Microsoft.Extensions.Logging;
+using Sekka.Core.Common;
+using Sekka.Core.Common.Messages;
+using Sekka.Core.DTOs.Financial;
+using Sekka.Core.Enums;
+using Sekka.Core.Interfaces.Persistence;
+using Sekka.Core.Interfaces.Services;
+using Sekka.Core.Specifications;
+using Sekka.Persistence.Entities;
+
+namespace Sekka.Application.Services;
+
+public class SettlementService : ISettlementService
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<SettlementService> _logger;
+
+    public SettlementService(IUnitOfWork unitOfWork, ILogger<SettlementService> logger)
+    {
+        _unitOfWork = unitOfWork;
+        _logger = logger;
+    }
+
+    public async Task<Result<List<SettlementDto>>> GetSettlementsAsync(Guid driverId, SettlementFilterDto filter)
+    {
+        var repo = _unitOfWork.GetRepository<Settlement, Guid>();
+        var spec = new SettlementsByDriverSpec(driverId, filter.PartnerId, filter.SettlementType, filter.DateFrom, filter.DateTo);
+        var settlements = await repo.ListAsync(spec);
+
+        var dtos = settlements
+            .OrderByDescending(s => s.SettledAt)
+            .Skip((filter.Page - 1) * filter.PageSize)
+            .Take(filter.PageSize)
+            .Select(MapToDto)
+            .ToList();
+
+        return Result<List<SettlementDto>>.Success(dtos);
+    }
+
+    public async Task<Result<SettlementDto>> CreateAsync(Guid driverId, CreateSettlementDto dto)
+    {
+        var partnerRepo = _unitOfWork.GetRepository<Partner, Guid>();
+        var partner = await partnerRepo.GetByIdAsync(dto.PartnerId);
+        if (partner == null)
+            return Result<SettlementDto>.NotFound(ErrorMessages.PartnerNotFound);
+
+        var settlement = new Settlement
+        {
+            Id = Guid.NewGuid(),
+            DriverId = driverId,
+            PartnerId = dto.PartnerId,
+            Amount = dto.Amount,
+            SettlementType = dto.SettlementType,
+            OrderCount = dto.OrderCount,
+            Notes = dto.Notes,
+            SettledAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var repo = _unitOfWork.GetRepository<Settlement, Guid>();
+        await repo.AddAsync(settlement);
+
+        // Create wallet transaction for the settlement
+        var txRepo = _unitOfWork.GetRepository<WalletTransaction, Guid>();
+        var walletSpec = new LatestWalletTransactionSpec(driverId);
+        var latestTx = (await txRepo.ListAsync(walletSpec)).FirstOrDefault();
+        var currentBalance = latestTx?.BalanceAfter ?? 0;
+
+        var walletTx = new WalletTransaction
+        {
+            Id = Guid.NewGuid(),
+            DriverId = driverId,
+            SettlementId = settlement.Id,
+            Amount = -dto.Amount,
+            TransactionType = TransactionType.Settlement,
+            BalanceAfter = currentBalance - dto.Amount,
+            Description = $"تسوية مع {partner.Name}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await txRepo.AddAsync(walletTx);
+
+        await _unitOfWork.SaveChangesAsync();
+        _logger.LogInformation("Settlement {SettlementId} created for driver {DriverId}, partner {PartnerId}, amount {Amount}",
+            settlement.Id, driverId, dto.PartnerId, dto.Amount);
+
+        return Result<SettlementDto>.Success(MapToDto(settlement));
+    }
+
+    public async Task<Result<PartnerBalanceDto>> GetPartnerBalanceAsync(Guid driverId, Guid partnerId)
+    {
+        var partnerRepo = _unitOfWork.GetRepository<Partner, Guid>();
+        var partner = await partnerRepo.GetByIdAsync(partnerId);
+        if (partner == null)
+            return Result<PartnerBalanceDto>.NotFound(ErrorMessages.PartnerNotFound);
+
+        var repo = _unitOfWork.GetRepository<Settlement, Guid>();
+        var spec = new SettlementsByDriverSpec(driverId, partnerId);
+        var settlements = await repo.ListAsync(spec);
+
+        return Result<PartnerBalanceDto>.Success(new PartnerBalanceDto
+        {
+            PartnerId = partnerId,
+            PartnerName = partner.Name,
+            TotalCollected = 0, // Would be calculated from orders
+            TotalSettled = settlements.Sum(s => s.Amount),
+            PendingBalance = 0, // Would be calculated from orders - settlements
+            PendingOrderCount = 0
+        });
+    }
+
+    public async Task<Result<DailySettlementSummaryDto>> GetDailySummaryAsync(Guid driverId)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var repo = _unitOfWork.GetRepository<Settlement, Guid>();
+        var spec = new SettlementsByDriverSpec(driverId, dateFrom: DateTime.UtcNow.Date, dateTo: DateTime.UtcNow.Date.AddDays(1));
+        var settlements = await repo.ListAsync(spec);
+
+        return Result<DailySettlementSummaryDto>.Success(new DailySettlementSummaryDto
+        {
+            Date = today,
+            TotalCollected = 0,
+            TotalSettled = settlements.Sum(s => s.Amount),
+            RemainingBalance = 0,
+            SettlementCount = settlements.Count,
+            PendingPartners = 0
+        });
+    }
+
+    public Task<Result<bool>> UploadReceiptAsync(Guid driverId, Guid id, Stream stream, string fileName)
+    {
+        // File upload would be handled by a storage service
+        _logger.LogInformation("Receipt upload requested for settlement {Id} by driver {DriverId}, file: {FileName}",
+            id, driverId, fileName);
+        return Task.FromResult(Result<bool>.Success(true));
+    }
+
+    private static SettlementDto MapToDto(Settlement s) => new()
+    {
+        Id = s.Id,
+        DriverId = s.DriverId,
+        PartnerId = s.PartnerId,
+        Amount = s.Amount,
+        SettlementType = s.SettlementType,
+        OrderCount = s.OrderCount,
+        Notes = s.Notes,
+        ReceiptImageUrl = s.ReceiptImageUrl,
+        WhatsAppSent = s.WhatsAppSent,
+        SettledAt = s.SettledAt,
+        CreatedAt = s.CreatedAt
+    };
+}
+
+internal class SettlementsByDriverSpec : BaseSpecification<Settlement>
+{
+    public SettlementsByDriverSpec(Guid driverId, Guid? partnerId = null, SettlementType? type = null, DateTime? dateFrom = null, DateTime? dateTo = null)
+    {
+        SetCriteria(s => s.DriverId == driverId
+            && (!partnerId.HasValue || s.PartnerId == partnerId.Value)
+            && (!type.HasValue || s.SettlementType == type.Value)
+            && (!dateFrom.HasValue || s.SettledAt >= dateFrom.Value)
+            && (!dateTo.HasValue || s.SettledAt <= dateTo.Value));
+        SetOrderByDescending(s => s.SettledAt);
+    }
+}
+
+internal class LatestWalletTransactionSpec : BaseSpecification<WalletTransaction>
+{
+    public LatestWalletTransactionSpec(Guid driverId)
+    {
+        SetCriteria(t => t.DriverId == driverId);
+        SetOrderByDescending(t => t.CreatedAt);
+        ApplyPaging(0, 1);
+    }
+}

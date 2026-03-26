@@ -44,6 +44,18 @@ public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid
     public DbSet<PickupPoint> PickupPoints => Set<PickupPoint>();
     public DbSet<CommunityBlacklist> CommunityBlacklist => Set<CommunityBlacklist>();
 
+    // Phase 4: Financial
+    public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
+    public DbSet<Settlement> Settlements => Set<Settlement>();
+    public DbSet<Expense> Expenses => Set<Expense>();
+    public DbSet<PaymentRequest> PaymentRequests => Set<PaymentRequest>();
+    public DbSet<DailyStats> DailyStats => Set<DailyStats>();
+    public DbSet<OrderDispute> OrderDisputes => Set<OrderDispute>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+    public DbSet<RefundRequest> RefundRequests => Set<RefundRequest>();
+    public DbSet<SurgePricingRule> SurgePricingRules => Set<SurgePricingRule>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

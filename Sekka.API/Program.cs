@@ -155,11 +155,24 @@ builder.Services.AddScoped<IPartnerService, PartnerService>();
 builder.Services.AddScoped<IPickupPointService, PickupPointService>();
 builder.Services.AddScoped<IPartnerPortalService, PartnerPortalService>();
 
+// Phase 4 — Financial Services
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<ICashSafetyService, CashSafetyService>();
+builder.Services.AddScoped<ISettlementService, SettlementService>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+builder.Services.AddScoped<IPaymentRequestService, PaymentRequestService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<IRefundService, RefundService>();
+builder.Services.AddScoped<IDisputeService, DisputeService>();
+builder.Services.AddScoped<ISurgePricingService, SurgePricingService>();
+
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
 // ══════════════════════════════════════════════════════════════
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.StaleOrderCleanupService>();
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.CashAlertBackgroundService>();
+builder.Services.AddHostedService<Sekka.Application.BackgroundServices.DailyStatisticsService>();
 
 // ══════════════════════════════════════════════════════════════
 // 8. Rate Limiting
@@ -310,8 +323,8 @@ app.MapHealthChecks("/health");
 
 // SignalR Hubs
 app.MapHub<Sekka.API.Hubs.OrderTrackingHub>("/hubs/tracking");
-// app.MapHub<NotificationHub>("/hubs/notifications");
-// app.MapHub<CashAlertHub>("/hubs/cash-alerts");
+app.MapHub<Sekka.API.Hubs.NotificationHub>("/hubs/notifications");
+app.MapHub<Sekka.API.Hubs.CashAlertHub>("/hubs/cash-alerts");
 // app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();

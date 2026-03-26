@@ -102,4 +102,21 @@ public static class ErrorMessages
     public static string CallerIdNotFound => "هوية المتصل غير موجودة";
     public static string PickupPointNotFound => "نقطة الاستلام غير موجودة";
     public static string BlacklistEntryNotFound => "الرقم غير موجود في القائمة السوداء";
+
+    // ── Financial ──
+    public static string InsufficientBalance => "رصيد غير كافي";
+    public static string WalletFrozen => "المحفظة مجمدة";
+    public static string WalletNotFrozen => "المحفظة غير مجمدة";
+    public static string SettlementNotFound => "التسوية غير موجودة";
+    public static string ExpenseNotFound => "المصروف غير موجود";
+    public static string PaymentRequestNotFound => "طلب الدفع غير موجود";
+    public static string PaymentRequestAlreadyReviewed => "طلب الدفع تمت مراجعته بالفعل";
+    public static string PaymentRequestExpired => "طلب الدفع منتهي الصلاحية";
+    public static string DisputeNotFound => "النزاع غير موجود";
+    public static string DisputeAlreadyResolved => "النزاع تم حله بالفعل";
+    public static string InvoiceNotFound => "الفاتورة غير موجودة";
+    public static string RefundNotFound => "طلب الاسترداد غير موجود";
+    public static string RefundAlreadyProcessed => "طلب الاسترداد تمت معالجته بالفعل";
+    public static string SurgePricingRuleNotFound => "قاعدة التسعير غير موجودة";
+    public static string DailyStatsNotFound => "إحصائيات اليوم غير موجودة";
 }

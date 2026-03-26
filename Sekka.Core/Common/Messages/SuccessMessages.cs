@@ -93,4 +93,29 @@ public static class SuccessMessages
     public static string PickupPointRated => "تم تقييم نقطة الاستلام بنجاح";
     public static string BlacklistVerified => "تم تأكيد البلاغ بنجاح";
     public static string BlacklistRemoved => "تم إزالة الرقم من القائمة السوداء بنجاح";
+
+    // ── Financial ──
+    public static string SettlementCreated => "تم إنشاء التسوية بنجاح";
+    public static string SettlementApproved => "تم الموافقة على التسوية بنجاح";
+    public static string SettlementRejected => "تم رفض التسوية";
+    public static string ReceiptUploaded => "تم رفع الإيصال بنجاح";
+    public static string PaymentRequestCreated => "تم إنشاء طلب الدفع بنجاح";
+    public static string PaymentRequestApproved => "تم الموافقة على طلب الدفع بنجاح";
+    public static string PaymentRequestRejected => "تم رفض طلب الدفع";
+    public static string PaymentRequestCancelled => "تم إلغاء طلب الدفع بنجاح";
+    public static string ProofUploaded => "تم رفع إثبات التحويل بنجاح";
+    public static string ExpenseCreated => "تم تسجيل المصروف بنجاح";
+    public static string DisputeCreated => "تم فتح النزاع بنجاح";
+    public static string DisputeResolved => "تم حل النزاع بنجاح";
+    public static string DisputeRejected => "تم رفض النزاع";
+    public static string DisputeEscalated => "تم تصعيد النزاع";
+    public static string InvoiceGenerated => "تم إنشاء الفاتورة بنجاح";
+    public static string InvoiceStatusUpdated => "تم تحديث حالة الفاتورة بنجاح";
+    public static string RefundRequested => "تم تقديم طلب الاسترداد بنجاح";
+    public static string RefundApproved => "تم الموافقة على الاسترداد بنجاح";
+    public static string RefundRejected => "تم رفض الاسترداد";
+    public static string WalletAdjusted => "تم تعديل الرصيد بنجاح";
+    public static string WalletFrozenSuccess => "تم تجميد المحفظة بنجاح";
+    public static string WalletUnfrozen => "تم إلغاء تجميد المحفظة بنجاح";
+    public static string BulkAdjustmentCompleted => "تم التعديل الجماعي بنجاح";
 }
