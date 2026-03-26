@@ -125,6 +125,44 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> CalculatePrice([FromBody] PriceCalculationRequestDto dto)
         => ToActionResult(await _worthService.CalculatePriceAsync(dto));
 
+    [HttpPost("{id:guid}/disclaimer")]
+    public IActionResult CreateDisclaimer(Guid id, [FromBody] CreateDisclaimerDto dto)
+        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إخلاء المسؤولية")));
+
+    [HttpGet("{id:guid}/disclaimer")]
+    public IActionResult GetDisclaimer(Guid id)
+        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إخلاء المسؤولية")));
+
+    [HttpPost("{id:guid}/dispute")]
+    public IActionResult CreateDispute(Guid id)
+        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("النزاعات")));
+
+    [HttpGet("{id:guid}/disputes")]
+    public IActionResult GetDisputes(Guid id)
+        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("النزاعات")));
+
+    [HttpPost("{id:guid}/refund")]
+    public IActionResult CreateRefund(Guid id)
+        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("الاسترداد")));
+
+    [HttpGet("{id:guid}/refunds")]
+    public IActionResult GetRefunds(Guid id)
+        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("الاسترداد")));
+
+    [HttpGet("time-slots")]
+    public async Task<IActionResult> GetTimeSlots([FromQuery] DateOnly date, [FromQuery] Guid? regionId)
+    {
+        var timeSlotService = HttpContext.RequestServices.GetRequiredService<ITimeSlotService>();
+        return ToActionResult(await timeSlotService.GetAvailableSlotsAsync(date, regionId));
+    }
+
+    [HttpPost("{id:guid}/book-slot")]
+    public async Task<IActionResult> BookSlot(Guid id, [FromBody] BookSlotDto dto)
+    {
+        var timeSlotService = HttpContext.RequestServices.GetRequiredService<ITimeSlotService>();
+        return ToActionResult(await timeSlotService.BookSlotAsync(GetDriverId(), id, dto), message: SuccessMessages.TimeSlotBooked);
+    }
+
     private IActionResult ToActionResult<T>(Result<T> result, int successCode = 200, string? message = null)
     {
         if (result.IsSuccess)

@@ -143,13 +143,15 @@ builder.Services.AddScoped<ITimelineService, TimelineService>();
 builder.Services.AddScoped<ITrackingLinkService, TrackingLinkService>();
 builder.Services.AddScoped<IAutoAssignmentService, AutoAssignmentService>();
 builder.Services.AddScoped<ITimeSlotService, TimeSlotService>();
+builder.Services.AddScoped<ISmartAddressService, SmartAddressService>();
+builder.Services.AddScoped<IVoiceMemoService, VoiceMemoService>();
+builder.Services.AddScoped<IOrderSourceService, OrderSourceService>();
 
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
-// — Uncomment as implemented —
 // ══════════════════════════════════════════════════════════════
-// builder.Services.AddHostedService<StaleOrderCleanupService>();
-// builder.Services.AddHostedService<CashAlertService>();
+builder.Services.AddHostedService<Sekka.Application.BackgroundServices.StaleOrderCleanupService>();
+builder.Services.AddHostedService<Sekka.Application.BackgroundServices.CashAlertBackgroundService>();
 
 // ══════════════════════════════════════════════════════════════
 // 8. Rate Limiting
