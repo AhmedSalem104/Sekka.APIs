@@ -1,5 +1,5 @@
 # Sekka.API — Master Implementation Reference
-# Version: 5.0 | Date: 2026-03-26 | Status: Phase 3 Complete
+# Version: 6.0 | Date: 2026-03-26 | Status: Phase 4 Complete
 # Source: clean-architecture-docs.md (~11,183 lines)
 
 ---
@@ -21,7 +21,7 @@
 - 452+ DTOs | 82 enums | 4 SignalR hubs | 11 background services
 - 5 middleware | 2 health checks | 59+ indexes | 27 constraints
 
-### Current Implementation Status (Phases 0–3)
+### Current Implementation Status (Phases 0–4)
 
 | Phase | Status | Tables | Controllers | Endpoints | Services | Enums | DTOs |
 |-------|--------|--------|-------------|-----------|----------|-------|------|
@@ -29,13 +29,14 @@
 | 1 — Auth & Identity | COMPLETE | 15 | 12 | 84 | 14 | 12 | 80+ |
 | 2 — Orders & Delivery | COMPLETE | 12 | 9 | 72+ | 18 | 13 | 70+ |
 | 3 — Customers & Partners | COMPLETE | 8 | 9 | 57 | 6 | 5 | 40+ |
-| **TOTAL** | **3 Phases** | **35** | **31** | **213+** | **39** | **30** | **190+** |
+| 4 — Financial | COMPLETE | 10 | 13 | 82+ | 10 | 14 | 80+ |
+| **TOTAL** | **4 Phases** | **45** | **44** | **295+** | **49** | **44** | **270+** |
 
-- 3 Migrations applied (Phase1_AuthIdentity, Phase2_OrdersDelivery, Phase3_CustomersPartners)
-- 2 Background services active (StaleOrderCleanup, CashAlert)
-- 1 SignalR Hub active (OrderTrackingHub `/hubs/tracking`)
-- Centralized message system: 50+ ErrorMessages, 43+ SuccessMessages
-- Frontend docs: AUTH_API.md, ORDERS_API.md, CUSTOMERS_PARTNERS_API.md
+- 4 Migrations applied (Phase1_AuthIdentity, Phase2_OrdersDelivery, Phase3_CustomersPartners, Phase4_Financial)
+- 3 Background services active (StaleOrderCleanup, CashAlert, DailyStatistics)
+- 3 SignalR Hubs active (OrderTrackingHub, NotificationHub, CashAlertHub)
+- Centralized message system: 65+ ErrorMessages, 66+ SuccessMessages
+- Frontend docs: AUTH_API.md, ORDERS_API.md, CUSTOMERS_PARTNERS_API.md, FINANCIAL_API.md
 
 ---
 
@@ -48,7 +49,7 @@ Core → Persistence → Infrastructure → Application → API
                                AdminControlDashboard
 ```
 
-### Layer Details (Current — Phase 3)
+### Layer Details (Current — Phase 4)
 
 **Sekka.Core** (no dependencies)
 ```
@@ -78,7 +79,7 @@ DTOs/
   ├── Customer/     ← CustomerDtos, RatingDtos, BlockDtos, AddressDtos, CallerIdDtos
   ├── Partner/      ← PartnerDtos, PickupPointDtos, PartnerPortalDtos
   └── Common/       ← PaginationDto
-Enums/ (30 total)
+Enums/ (44 total)
   Phase 1: VehicleType, PhoneType, ThemeMode, MapApp, DevicePlatform,
            DeletionRequestStatus, NotificationType, NotificationPriority,
            ShiftStatus, SubscriptionStatus, OrderStatus, ChallengeType
@@ -87,8 +88,12 @@ Enums/ (30 total)
            SyncOperation, SyncStatus, DuplicateAction, AssignmentStrategy,
            TimelineEventType
   Phase 3: AddressType, ContactType, PartnerType, CommissionType, VerificationStatus
+  Phase 4: TransactionType, SettlementType, ExpenseType, PaymentPurpose,
+           ManualPaymentMethod, PaymentRequestStatus, DisputeType, DisputeStatus,
+           InvoiceStatus, RefundReason, RefundStatus, SurgeTrigger,
+           WalletAdjustmentType, WalletFreezeReason
 Interfaces/
-  ├── Services/     ← 34 interfaces (13 Phase1 + 15 Phase2 + 6 Phase3)
+  ├── Services/     ← 44 interfaces (13 Phase1 + 15 Phase2 + 6 Phase3 + 10 Phase4)
   └── Persistence/  ← IGenericRepository<TEntity,TKey>, IUnitOfWork
 Specifications/     ← ISpecification<T>, BaseSpecification<T>
 Validators/
@@ -102,7 +107,7 @@ Mapping/            ← MappingProfile.cs (Core-level)
 
 **Sekka.Persistence** (→ Core)
 ```
-Entities/ (27 + 3 base = 30 entity classes)
+Entities/ (37 + 3 base = 40 entity classes)
   ├── Base/         ← BaseEntity<TKey>, AuditableEntity<TKey>, SoftDeletableEntity<TKey>
   Phase 1 (7):
   ├── Driver.cs, DriverPreferences.cs, NotificationChannelPreference.cs,
@@ -112,16 +117,21 @@ Entities/ (27 + 3 base = 30 entity classes)
   │   CancellationLog.cs, OrderSourceTag.cs, WaitingTimer.cs, OrderTransferLog.cs,
   │   VoiceMemo.cs, SyncQueue.cs, TrackingLink.cs, DeliveryTimeSlot.cs
   Phase 3 (8):
-  └── Customer.cs, Address.cs, Rating.cs, CallerIdNote.cs, BlockedCustomer.cs,
-      Partner.cs, PickupPoint.cs, CommunityBlacklist.cs
+  ├── Customer.cs, Address.cs, Rating.cs, CallerIdNote.cs, BlockedCustomer.cs,
+  │   Partner.cs, PickupPoint.cs, CommunityBlacklist.cs
+  Phase 4 (10):
+  └── WalletTransaction.cs, Settlement.cs, Expense.cs, PaymentRequest.cs,
+      DailyStats.cs, OrderDispute.cs, Invoice.cs, InvoiceItem.cs,
+      RefundRequest.cs, SurgePricingRule.cs
 
-Configurations/ (27 files — one per entity)
+Configurations/ (37 files — one per entity)
 Interceptors/       ← AuditInterceptor (SaveChangesInterceptor)
 Migrations/
   ├── Phase1_AuthIdentity (15 tables)
   ├── Phase2_OrdersDelivery (12 tables)
-  └── Phase3_CustomersPartners (8 tables)
-SekkaDbContext.cs   ← 35 DbSets, global soft-delete filter
+  ├── Phase3_CustomersPartners (8 tables)
+  └── Phase4_Financial (10 tables)
+SekkaDbContext.cs   ← 45 DbSets, global soft-delete filter
 DbInitializer.cs    ← Role seeding (Driver, Admin, Support)
 ```
 
@@ -135,7 +145,7 @@ UnitOfWork.cs
 
 **Sekka.Application** (→ Core + Infrastructure)
 ```
-Services/ (26 service implementations)
+Services/ (36 service implementations)
   ├── Base/BaseService.cs
   Phase 1 (11): AuthService, SmsService, ProfileService, DriverPreferencesService,
                 AccountManagementService, DataPrivacyService, DemoService,
@@ -148,9 +158,13 @@ Services/ (26 service implementations)
                 SmartAddressService, VoiceMemoService, OrderSourceService
   Phase 3 (6): CustomerService, CallerIdService, AddressService,
                PartnerService, PickupPointService, PartnerPortalService
+  Phase 4 (10): WalletService, CashSafetyService, SettlementService,
+                StatisticsService, PaymentRequestService, AnalyticsService,
+                InvoiceService, RefundService, DisputeService, SurgePricingService
 BackgroundServices/
-  ├── StaleOrderCleanupService  ← Every 5 min (cancel pending > 30 min)
-  └── CashAlertBackgroundService ← Every 10 min (check cash thresholds)
+  ├── StaleOrderCleanupService    ← Every 5 min (cancel pending > 30 min)
+  ├── CashAlertBackgroundService  ← Every 10 min (check cash thresholds)
+  └── DailyStatisticsService      ← Daily 11 PM (aggregate daily stats)
 Mapping/
   └── ApplicationMappingProfile.cs ← All Entity↔DTO mappings
 ```
@@ -165,9 +179,9 @@ Services/
 
 **Sekka.API** (→ All)
 ```
-Controllers/ (31 total)
+Controllers/ (44 total)
   ├── Base/BaseCrudController.cs
-  ├── Driver/ (20 controllers)
+  ├── Driver/ (26 controllers)
   │   Phase 1: AuthController (15), ProfileController (20), SettingsController (10),
   │            DataPrivacyController (5), BadgeController (2), HealthScoreController (2),
   │            DemoController (4), LookupsController (1)
@@ -175,20 +189,28 @@ Controllers/ (31 total)
   │            SyncController (4), TrackingController (1), TimelineController (3), OcrController (3)
   │   Phase 3: CustomerController (11), CallerIdController (5), AddressController (6),
   │            PartnerController (8), PickupPointController (4), PartnerPortalController (6)
-  └── Admin/ (10 controllers)
+  │   Phase 4: WalletController (4), SettlementController (5), StatisticsController (5),
+  │            PaymentRequestController (5), InvoiceController (4), AnalyticsController (6)
+  └── Admin/ (17 controllers)
       Phase 1: AdminDriversController (6), AdminRolesController (7),
                AdminSubscriptionsController (13)
       Phase 2: AdminOrdersController (10), AdminTimeSlotsController (6)
       Phase 3: AdminCustomersController (5), AdminPartnersController (8),
                AdminBlacklistController (4)
+      Phase 4: AdminSettlementsController (5), AdminStatisticsController (20),
+               AdminPaymentController (5), AdminWalletController (10),
+               AdminDisputesController (7), AdminInvoiceController (7),
+               AdminRefundController (6)
 Hubs/
-  └── OrderTrackingHub.cs ← /hubs/tracking (JoinOrderGroup, UpdateLocation, JoinAdmin)
+  ├── OrderTrackingHub.cs    ← /hubs/tracking
+  ├── NotificationHub.cs     ← /hubs/notifications
+  └── CashAlertHub.cs        ← /hubs/cash-alerts
 Middleware/ (4)
   ├── GlobalExceptionHandler.cs
   ├── RequestLoggingMiddleware.cs
   ├── LocaleNormalizationMiddleware.cs
   └── MaintenanceMiddleware.cs
-Program.cs ← Full DI (39 services + 2 background + hub)
+Program.cs ← Full DI (49 services + 3 background + 3 hubs)
 ```
 
 ---
@@ -231,7 +253,7 @@ IUnitOfWork { GetRepository<,>(), SaveChangesAsync(), BeginTransactionAsync() �
 
 ---
 
-## 4. DATABASE (35 Tables)
+## 4. DATABASE (45 Tables)
 
 ### Phase 1 — Auth & Identity (15 tables)
 ```
@@ -253,6 +275,13 @@ SyncQueues, TrackingLinks, DeliveryTimeSlots
 Customers (UNIQUE: DriverId+Phone), Addresses, Ratings (8 bool tags),
 CallerIdNotes (UNIQUE: DriverId+PhoneNumber), BlockedCustomers (UNIQUE: DriverId+CustomerPhone),
 Partners (with verification workflow), PickupPoints, CommunityBlacklist (PhoneNumber PK)
+```
+
+### Phase 4 — Financial (10 tables)
+```
+WalletTransactions, Settlements, Expenses, PaymentRequests (UNIQUE: ReferenceCode),
+DailyStats (UNIQUE: DriverId+Date), OrderDisputes, Invoices (UNIQUE: InvoiceNumber),
+InvoiceItems, RefundRequests, SurgePricingRules
 ```
 
 ### Connection
@@ -277,7 +306,9 @@ Partners (with verification workflow), PickupPoints, CommunityBlacklist (PhoneNu
     OrderWorth, AddressSwap, WaitingTimer, Route, RecurringOrder, Sync, Timeline,
     TrackingLink, AutoAssignment, TimeSlot, SmartAddress, VoiceMemo, OrderSource
 11. Phase 3 Services (6): Customer, CallerId, Address, Partner, PickupPoint, PartnerPortal
-12. Background Services (2): StaleOrderCleanup, CashAlert
+12. Phase 4 Services (10): Wallet, CashSafety, Settlement, Statistics, PaymentRequest,
+    Analytics, Invoice, Refund, Dispute, SurgePricing
+13. Background Services (3): StaleOrderCleanup, CashAlert, DailyStatistics
 13. FluentValidation (assembly scan)
 14. Rate Limiting (OtpLimiter + ApiLimiter)
 15. Health Checks
@@ -289,7 +320,7 @@ Partners (with verification workflow), PickupPoints, CommunityBlacklist (PhoneNu
 1. GlobalExceptionHandler → 2. RequestLogging → 3. LocaleNormalization → 4. Maintenance
 5. ResponseCompression → 6. Security Headers → 7. Swagger → 8. HTTPS → 9. Static Files
 10. CORS → 11. Auth → 12. Authorization → 13. RateLimiter
-14. MapControllers → 15. /health → 16. /hubs/tracking (OrderTrackingHub)
+14. MapControllers → 15. /health → 16. /hubs/tracking, /hubs/notifications, /hubs/cash-alerts
 ```
 
 ---
@@ -310,11 +341,6 @@ Partners (with verification workflow), PickupPoints, CommunityBlacklist (PhoneNu
 ---
 
 ## 7. WHAT'S NEXT (Remaining Phases)
-
-### Phase 4: Finance & Settlements
-- Wallet, Settlements, Expenses, PaymentRequests
-- Distributed locks for financial operations
-- Cash alert system enhancements
 
 ### Phase 5: Communication & Notifications
 - Firebase push, Email, WhatsApp
@@ -356,3 +382,4 @@ Partners (with verification workflow), PickupPoints, CommunityBlacklist (PhoneNu
 | `docs/AUTH_API.md` | Auth & Identity | 15 | ~1000 |
 | `docs/ORDERS_API.md` | Orders & Delivery | 64+ | ~3700 |
 | `docs/CUSTOMERS_PARTNERS_API.md` | Customers & Partners | 57 | ~3600 |
+| `docs/FINANCIAL_API.md` | Financial | 82+ | ~3500+ |
