@@ -242,12 +242,11 @@ public class OrderService : IOrderService
         return Result<OrderPhotoDto>.Success(_mapper.Map<OrderPhotoDto>(photo));
     }
 
-    private async Task<string> GenerateOrderNumber()
+    private Task<string> GenerateOrderNumber()
     {
         var date = DateTime.UtcNow.ToString("yyyyMMdd");
-        var repo = _unitOfWork.GetRepository<Order, Guid>();
-        var count = await repo.CountAsync(new OrdersByDatePrefixSpec(date));
-        return $"ORD-{date}-{(count + 1):D4}";
+        var seq = Guid.NewGuid().ToString("N")[..6].ToUpper();
+        return Task.FromResult($"ORD-{date}-{seq}");
     }
 }
 
