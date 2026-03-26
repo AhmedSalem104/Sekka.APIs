@@ -10,6 +10,12 @@ public class ApplicationMappingProfile : Profile
 {
     public ApplicationMappingProfile()
     {
+        // ── Phase 1: Auth & Identity ──
+        CreateMap<DriverPreferences, Core.DTOs.Settings.DriverPreferencesDto>();
+        CreateMap<NotificationChannelPreference, Core.DTOs.Settings.NotificationChannelPrefDto>();
+        CreateMap<ActiveSession, Core.DTOs.Account.ActiveSessionDto>();
+        CreateMap<UserConsent, Core.DTOs.Privacy.ConsentDto>();
+
         // ── Orders ──
         CreateMap<Order, OrderDto>();
         CreateMap<Order, OrderListDto>();
