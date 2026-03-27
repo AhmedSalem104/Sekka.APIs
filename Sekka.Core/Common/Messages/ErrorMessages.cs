@@ -147,6 +147,16 @@ public static class ErrorMessages
     public static string MaintenanceNotFound => "سجل الصيانة غير موجود";
     public static string RouteNotFound => "المسار غير موجود";
 
+    // ── Social & Extras ──
+    public static string ChallengeNotFound => "التحدي غير موجود";
+    public static string AchievementNotFound => "الإنجاز غير موجود";
+    public static string ReferralNotFound => "الإحالة غير موجودة";
+    public static string ReferralCodeAlreadyUsed => "كود الإحالة مستخدم بالفعل";
+    public static string CircleNotFound => "حلقة التوفير غير موجودة";
+    public static string CircleFull => "حلقة التوفير ممتلئة";
+    public static string AssistanceRequestNotFound => "طلب المساعدة غير موجود";
+    public static string RoadReportNotFound => "بلاغ الطريق غير موجود";
+
     // ── Admin & System ──
     public static string RegionNotFound => "المنطقة غير موجودة";
     public static string WebhookNotFound => "الويب هوك غير موجود";

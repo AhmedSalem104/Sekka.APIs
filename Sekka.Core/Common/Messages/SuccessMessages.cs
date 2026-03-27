@@ -151,6 +151,20 @@ public static class SuccessMessages
     public static string RecommendationDismissed => "تم تجاهل التوصية";
     public static string RecommendationActedUpon => "تم تنفيذ التوصية";
 
+    // ── Social & Extras ──
+    public static string SubscriptionCreated => "تم إنشاء الاشتراك بنجاح";
+    public static string SubscriptionCancelled => "تم إلغاء الاشتراك بنجاح";
+    public static string SubscriptionRenewed => "تم تجديد الاشتراك بنجاح";
+    public static string ChallengeCompleted => "تم إكمال التحدي بنجاح";
+    public static string AchievementUnlocked => "تم فتح الإنجاز بنجاح";
+    public static string ReferralSent => "تم إرسال الإحالة بنجاح";
+    public static string ReferralRewardClaimed => "تم استلام مكافأة الإحالة بنجاح";
+    public static string CircleCreated => "تم إنشاء حلقة التوفير بنجاح";
+    public static string CircleJoined => "تم الانضمام لحلقة التوفير بنجاح";
+    public static string AssistanceRequested => "تم إرسال طلب المساعدة بنجاح";
+    public static string RoadReportCreated => "تم إنشاء بلاغ الطريق بنجاح";
+    public static string RoadReportConfirmed => "تم تأكيد بلاغ الطريق بنجاح";
+
     // ── Location & Vehicles ──
     public static string VehicleCreated => "تم إضافة المركبة بنجاح";
     public static string VehicleUpdated => "تم تحديث المركبة بنجاح";

@@ -130,5 +130,17 @@ public class ApplicationMappingProfile : Profile
         CreateMap<MaintenanceWindow, Core.DTOs.System.MaintenanceWindowDto>();
         CreateMap<SystemNotice, Core.DTOs.System.SystemNoticeDto>();
         CreateMap<AuditLog, Core.DTOs.System.AuditLogDto>();
+
+        // ── Phase 9: Social & Extras ──
+        CreateMap<SubscriptionPlan, object>(); // placeholder
+        CreateMap<Subscription, object>(); // placeholder
+        CreateMap<Challenge, Core.DTOs.Social.ChallengeDto>();
+        CreateMap<DriverAchievement, Core.DTOs.Social.DriverAchievementDto>();
+        CreateMap<Referral, Core.DTOs.Social.ReferralDto>();
+        CreateMap<SavingsCircle, Core.DTOs.Social.CircleDto>();
+        CreateMap<SavingsCircleMember, Core.DTOs.Social.CircleMemberDto>();
+        CreateMap<SavingsCirclePayment, Core.DTOs.Social.CirclePaymentDto>();
+        CreateMap<FieldAssistanceRequest, Core.DTOs.Social.HelpRequestDto>();
+        CreateMap<RoadReport, Core.DTOs.Social.RoadReportDto>();
     }
 }

@@ -84,6 +84,19 @@ public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid
     public DbSet<CustomerRecommendation> CustomerRecommendations => Set<CustomerRecommendation>();
     public DbSet<CampaignTarget> CampaignTargets => Set<CampaignTarget>();
 
+    // Phase 9: Social & Extras
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<Challenge> Challenges => Set<Challenge>();
+    public DbSet<DriverAchievement> DriverAchievements => Set<DriverAchievement>();
+    public DbSet<Referral> Referrals => Set<Referral>();
+    public DbSet<SavingsCircle> SavingsCircles => Set<SavingsCircle>();
+    public DbSet<SavingsCircleMember> SavingsCircleMembers => Set<SavingsCircleMember>();
+    public DbSet<SavingsCirclePayment> SavingsCirclePayments => Set<SavingsCirclePayment>();
+    public DbSet<FieldAssistanceRequest> FieldAssistanceRequests => Set<FieldAssistanceRequest>();
+    public DbSet<RoadReport> RoadReports => Set<RoadReport>();
+    public DbSet<RoadReportConfirmation> RoadReportConfirmations => Set<RoadReportConfirmation>();
+
     // Phase 8: Admin & System
     public DbSet<Region> Regions => Set<Region>();
     public DbSet<AppConfiguration> AppConfigurations => Set<AppConfiguration>();

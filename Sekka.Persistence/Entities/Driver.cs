@@ -71,4 +71,14 @@ public class Driver : IdentityUser<Guid>
     // Phase 7: Intelligence
     public ICollection<CustomerInterest> CustomerInterestsData { get; set; } = new List<CustomerInterest>();
     public ICollection<BehaviorPattern> BehaviorPatterns { get; set; } = new List<BehaviorPattern>();
+
+    // Phase 9: Social & Extras
+    public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
+    public ICollection<DriverAchievement> Achievements { get; set; } = new List<DriverAchievement>();
+    public ICollection<Referral> ReferralsSent { get; set; } = new List<Referral>();
+    public ICollection<Referral> ReferralsReceived { get; set; } = new List<Referral>();
+    public ICollection<SavingsCircle> SavingsCirclesCreated { get; set; } = new List<SavingsCircle>();
+    public ICollection<SavingsCircleMember> SavingsCircleMemberships { get; set; } = new List<SavingsCircleMember>();
+    public ICollection<FieldAssistanceRequest> FieldAssistanceRequestsSent { get; set; } = new List<FieldAssistanceRequest>();
+    public ICollection<RoadReport> RoadReports { get; set; } = new List<RoadReport>();
 }

@@ -195,12 +195,21 @@ builder.Services.AddScoped<IWebhookService, WebhookService>();
 builder.Services.AddScoped<IAppConfigService, AppConfigService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
+// Phase 9 — Social & Extras Services
+builder.Services.AddScoped<IGamificationService, GamificationService>();
+builder.Services.AddScoped<IReferralService, ReferralService>();
+builder.Services.AddScoped<IShiftService, ShiftService>();
+builder.Services.AddScoped<ISavingsCircleService, SavingsCircleService>();
+builder.Services.AddScoped<IColleagueRadarService, ColleagueRadarService>();
+builder.Services.AddScoped<IRoadReportService, RoadReportService>();
+
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
 // ══════════════════════════════════════════════════════════════
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.StaleOrderCleanupService>();
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.CashAlertBackgroundService>();
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.DailyStatisticsService>();
+builder.Services.AddHostedService<Sekka.Application.BackgroundServices.RoadReportCleanupService>();
 
 // ══════════════════════════════════════════════════════════════
 // 8. Rate Limiting
