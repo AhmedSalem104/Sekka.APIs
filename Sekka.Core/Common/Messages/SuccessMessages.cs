@@ -162,4 +162,23 @@ public static class SuccessMessages
     public static string ParkingSpotDeleted => "تم حذف مكان الركنة";
     public static string BreakStarted => "تم بدء الاستراحة";
     public static string BreakEnded => "تم إنهاء الاستراحة";
+
+    // ── Admin & System ──
+    public static string RegionCreated => "تم إنشاء المنطقة بنجاح";
+    public static string RegionUpdated => "تم تحديث المنطقة بنجاح";
+    public static string RegionDeleted => "تم حذف المنطقة بنجاح";
+    public static string WebhookCreated => "تم إنشاء الويب هوك بنجاح";
+    public static string WebhookUpdated => "تم تحديث الويب هوك بنجاح";
+    public static string WebhookDeleted => "تم حذف الويب هوك بنجاح";
+    public static string ConfigUpdated => "تم تحديث الإعداد بنجاح";
+    public static string VersionCreated => "تم إنشاء إصدار التطبيق بنجاح";
+    public static string VersionUpdated => "تم تحديث إصدار التطبيق بنجاح";
+    public static string FeatureFlagCreated => "تم إنشاء علم الميزة بنجاح";
+    public static string FeatureFlagUpdated => "تم تحديث علم الميزة بنجاح";
+    public static string FeatureFlagToggled => "تم تبديل حالة الميزة بنجاح";
+    public static string MaintenanceScheduled => "تم جدولة نافذة الصيانة بنجاح";
+    public static string MaintenanceDeleted => "تم حذف نافذة الصيانة بنجاح";
+    public static string NoticeCreated => "تم إنشاء إشعار النظام بنجاح";
+    public static string NoticeUpdated => "تم تحديث إشعار النظام بنجاح";
+    public static string NoticeDeleted => "تم حذف إشعار النظام بنجاح";
 }

@@ -84,6 +84,17 @@ public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid
     public DbSet<CustomerRecommendation> CustomerRecommendations => Set<CustomerRecommendation>();
     public DbSet<CampaignTarget> CampaignTargets => Set<CampaignTarget>();
 
+    // Phase 8: Admin & System
+    public DbSet<Region> Regions => Set<Region>();
+    public DbSet<AppConfiguration> AppConfigurations => Set<AppConfiguration>();
+    public DbSet<WebhookConfig> WebhookConfigs => Set<WebhookConfig>();
+    public DbSet<WebhookLog> WebhookLogs => Set<WebhookLog>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AppVersion> AppVersions => Set<AppVersion>();
+    public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
+    public DbSet<MaintenanceWindow> MaintenanceWindows => Set<MaintenanceWindow>();
+    public DbSet<SystemNotice> SystemNotices => Set<SystemNotice>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

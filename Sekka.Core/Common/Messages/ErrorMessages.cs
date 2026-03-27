@@ -146,4 +146,15 @@ public static class ErrorMessages
     public static string NoActiveBreak => "لا توجد استراحة نشطة";
     public static string MaintenanceNotFound => "سجل الصيانة غير موجود";
     public static string RouteNotFound => "المسار غير موجود";
+
+    // ── Admin & System ──
+    public static string RegionNotFound => "المنطقة غير موجودة";
+    public static string WebhookNotFound => "الويب هوك غير موجود";
+    public static string WebhookTestFailed => "فشل اختبار الويب هوك";
+    public static string ConfigKeyNotFound => "مفتاح الإعداد غير موجود";
+    public static string VersionNotFound => "إصدار التطبيق غير موجود";
+    public static string FeatureFlagNotFound => "علم الميزة غير موجود";
+    public static string MaintenanceWindowNotFound => "نافذة الصيانة غير موجودة";
+    public static string SystemNoticeNotFound => "إشعار النظام غير موجود";
+    public static string AuditLogNotFound => "سجل المراجعة غير موجود";
 }

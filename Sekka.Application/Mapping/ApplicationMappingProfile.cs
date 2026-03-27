@@ -120,5 +120,15 @@ public class ApplicationMappingProfile : Profile
         CreateMap<CustomerSegmentMember, Core.DTOs.Admin.SegmentMemberDto>();
         CreateMap<CampaignTarget, Core.DTOs.Admin.AdminCampaignDto>();
         CreateMap<CampaignTarget, Core.DTOs.Admin.AdminCampaignDetailDto>();
+
+        // ── Phase 8: Admin & System ──
+        CreateMap<Region, Core.DTOs.System.RegionDto>();
+        CreateMap<WebhookConfig, Core.DTOs.System.WebhookConfigDto>();
+        CreateMap<WebhookLog, Core.DTOs.System.WebhookLogDto>();
+        CreateMap<AppVersion, Core.DTOs.System.AppVersionDto>();
+        CreateMap<FeatureFlag, Core.DTOs.System.FeatureFlagDto>();
+        CreateMap<MaintenanceWindow, Core.DTOs.System.MaintenanceWindowDto>();
+        CreateMap<SystemNotice, Core.DTOs.System.SystemNoticeDto>();
+        CreateMap<AuditLog, Core.DTOs.System.AuditLogDto>();
     }
 }

@@ -190,6 +190,11 @@ builder.Services.AddScoped<ISegmentationService, SegmentationService>();
 builder.Services.AddScoped<IBehaviorAnalysisService, BehaviorAnalysisService>();
 builder.Services.AddScoped<ICampaignTargetingService, CampaignTargetingService>();
 
+// Phase 8 — Admin & System Services
+builder.Services.AddScoped<IWebhookService, WebhookService>();
+builder.Services.AddScoped<IAppConfigService, AppConfigService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
 // ══════════════════════════════════════════════════════════════
