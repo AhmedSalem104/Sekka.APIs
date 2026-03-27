@@ -67,4 +67,8 @@ public class Driver : IdentityUser<Guid>
     public ICollection<ParkingSpot> ParkingSpots { get; set; } = new List<ParkingSpot>();
     public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
     public ICollection<BreakLog> BreakLogs { get; set; } = new List<BreakLog>();
+
+    // Phase 7: Intelligence
+    public ICollection<CustomerInterest> CustomerInterestsData { get; set; } = new List<CustomerInterest>();
+    public ICollection<BehaviorPattern> BehaviorPatterns { get; set; } = new List<BehaviorPattern>();
 }

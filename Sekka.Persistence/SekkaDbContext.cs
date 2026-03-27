@@ -73,6 +73,17 @@ public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid
     public DbSet<MaintenanceRecord> MaintenanceRecords => Set<MaintenanceRecord>();
     public DbSet<BreakLog> BreakLogs => Set<BreakLog>();
 
+    // Phase 7: Intelligence
+    public DbSet<InterestCategory> InterestCategories => Set<InterestCategory>();
+    public DbSet<CustomerInterest> CustomerInterests => Set<CustomerInterest>();
+    public DbSet<InterestSignal> InterestSignals => Set<InterestSignal>();
+    public DbSet<CustomerSegment> CustomerSegments => Set<CustomerSegment>();
+    public DbSet<CustomerSegmentMember> CustomerSegmentMembers => Set<CustomerSegmentMember>();
+    public DbSet<BehaviorPattern> BehaviorPatterns => Set<BehaviorPattern>();
+    public DbSet<RecommendationRule> RecommendationRules => Set<RecommendationRule>();
+    public DbSet<CustomerRecommendation> CustomerRecommendations => Set<CustomerRecommendation>();
+    public DbSet<CampaignTarget> CampaignTargets => Set<CampaignTarget>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

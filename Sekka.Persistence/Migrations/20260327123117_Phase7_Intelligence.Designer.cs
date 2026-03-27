@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sekka.Persistence;
 
@@ -11,9 +12,11 @@ using Sekka.Persistence;
 namespace Sekka.Persistence.Migrations
 {
     [DbContext(typeof(SekkaDbContext))]
-    partial class SekkaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260327123117_Phase7_Intelligence")]
+    partial class Phase7_Intelligence
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

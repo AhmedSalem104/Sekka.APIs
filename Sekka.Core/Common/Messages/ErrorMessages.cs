@@ -129,6 +129,15 @@ public static class ErrorMessages
     public static string MessageTemplateNotFound => "قالب الرسالة غير موجود";
     public static string CannotDeleteSystemTemplate => "لا يمكن حذف قالب النظام";
 
+    // ── Intelligence ──
+    public static string InterestCategoryNotFound => "فئة الاهتمام غير موجودة";
+    public static string CustomerInterestNotFound => "اهتمام العميل غير موجود";
+    public static string SegmentNotFound => "الشريحة غير موجودة";
+    public static string RecommendationNotFound => "التوصية غير موجودة";
+    public static string CampaignNotFound => "الحملة غير موجودة";
+    public static string CampaignAlreadyLaunched => "الحملة تم إطلاقها بالفعل";
+    public static string CampaignNotActive => "الحملة غير نشطة";
+
     // ── Location & Vehicles ──
     public static string VehicleNotFound => "المركبة غير موجودة";
     public static string VehicleAlreadyApproved => "المركبة موافق عليها بالفعل";

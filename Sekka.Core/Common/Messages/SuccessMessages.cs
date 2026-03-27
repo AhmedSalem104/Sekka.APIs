@@ -136,6 +136,21 @@ public static class SuccessMessages
     public static string MessageReadSuccess => "تم تعليم الرسالة كمقروءة";
     public static string BroadcastSent => "تم إرسال الإشعار الجماعي بنجاح";
 
+    // ── Intelligence ──
+    public static string SegmentCreated => "تم إنشاء الشريحة بنجاح";
+    public static string SegmentUpdated => "تم تحديث الشريحة بنجاح";
+    public static string SegmentDeleted => "تم حذف الشريحة بنجاح";
+    public static string SegmentRefreshed => "تم تحديث أعضاء الشريحة بنجاح";
+    public static string CampaignCreated => "تم إنشاء الحملة بنجاح";
+    public static string CampaignUpdated => "تم تحديث الحملة بنجاح";
+    public static string CampaignDeleted => "تم حذف الحملة بنجاح";
+    public static string CampaignLaunched => "تم إطلاق الحملة بنجاح";
+    public static string CampaignPaused => "تم إيقاف الحملة مؤقتاً";
+    public static string CampaignResumed => "تم استئناف الحملة بنجاح";
+    public static string RecommendationRead => "تم تعليم التوصية كمقروءة";
+    public static string RecommendationDismissed => "تم تجاهل التوصية";
+    public static string RecommendationActedUpon => "تم تنفيذ التوصية";
+
     // ── Location & Vehicles ──
     public static string VehicleCreated => "تم إضافة المركبة بنجاح";
     public static string VehicleUpdated => "تم تحديث المركبة بنجاح";

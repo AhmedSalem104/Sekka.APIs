@@ -182,6 +182,14 @@ builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IBreakService, BreakService>();
 builder.Services.AddScoped<IAdminVehicleService, AdminVehicleService>();
 
+// Phase 7 — Intelligence Services
+builder.Services.AddScoped<IInterestEngineService, InterestEngineService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddScoped<ICustomerProfilingService, CustomerProfilingService>();
+builder.Services.AddScoped<ISegmentationService, SegmentationService>();
+builder.Services.AddScoped<IBehaviorAnalysisService, BehaviorAnalysisService>();
+builder.Services.AddScoped<ICampaignTargetingService, CampaignTargetingService>();
+
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
 // ══════════════════════════════════════════════════════════════

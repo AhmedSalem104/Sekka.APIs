@@ -109,5 +109,16 @@ public class ApplicationMappingProfile : Profile
         CreateMap<ParkingSpot, Core.DTOs.Vehicle.ParkingSpotDto>();
         CreateMap<BreakLog, Core.DTOs.Vehicle.BreakLogDto>();
         CreateMap<Route, Core.DTOs.Route.RouteDto>();
+
+        // ── Phase 7: Intelligence ──
+        CreateMap<InterestCategory, Core.DTOs.Intelligence.InterestCategorySummaryDto>();
+        CreateMap<CustomerInterest, Core.DTOs.Intelligence.CustomerInterestDto>();
+        CreateMap<BehaviorPattern, Core.DTOs.Intelligence.BehaviorPatternDto>();
+        CreateMap<CustomerRecommendation, Core.DTOs.Intelligence.CustomerRecommendationDto>();
+        CreateMap<CustomerSegment, Core.DTOs.Admin.AdminSegmentDto>();
+        CreateMap<CustomerSegment, Core.DTOs.Admin.AdminSegmentDetailDto>();
+        CreateMap<CustomerSegmentMember, Core.DTOs.Admin.SegmentMemberDto>();
+        CreateMap<CampaignTarget, Core.DTOs.Admin.AdminCampaignDto>();
+        CreateMap<CampaignTarget, Core.DTOs.Admin.AdminCampaignDetailDto>();
     }
 }
