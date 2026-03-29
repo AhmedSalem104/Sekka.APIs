@@ -17,6 +17,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasIndex(o => new { o.DriverId, o.CreatedAt });
 
         builder.Property(o => o.OrderNumber).HasMaxLength(20);
+        builder.Property(o => o.CustomerName).HasMaxLength(100);
+        builder.Property(o => o.CustomerPhone).HasMaxLength(20);
         builder.Property(o => o.Description).HasMaxLength(500);
         builder.Property(o => o.Amount).HasPrecision(18, 2);
         builder.Property(o => o.CommissionAmount).HasPrecision(18, 2);

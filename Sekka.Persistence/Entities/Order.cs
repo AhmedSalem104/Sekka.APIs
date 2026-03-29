@@ -9,6 +9,8 @@ public class Order : SoftDeletableEntity<Guid>
     public Guid? CustomerId { get; set; }
     public Guid? PartnerId { get; set; }
     public string OrderNumber { get; set; } = null!;
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
     public string? Description { get; set; }
     public decimal Amount { get; set; }
     public decimal CommissionAmount { get; set; }
