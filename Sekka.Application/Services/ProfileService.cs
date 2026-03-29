@@ -4,7 +4,9 @@ using Sekka.Core.Common;
 using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Common;
 using Sekka.Core.DTOs.Profile;
+using Sekka.Core.Interfaces.Persistence;
 using Sekka.Core.Interfaces.Services;
+using Sekka.Core.Specifications;
 using Sekka.Persistence.Entities;
 using SM = Sekka.Core.Common.Messages.SuccessMessages;
 
@@ -13,11 +15,13 @@ namespace Sekka.Application.Services;
 public class ProfileService : IProfileService
 {
     private readonly UserManager<Driver> _userManager;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ProfileService> _logger;
 
-    public ProfileService(UserManager<Driver> userManager, ILogger<ProfileService> logger)
+    public ProfileService(UserManager<Driver> userManager, IUnitOfWork unitOfWork, ILogger<ProfileService> logger)
     {
         _userManager = userManager;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -153,28 +157,59 @@ public class ProfileService : IProfileService
             new PagedResult<ActivityLogDto>(new List<ActivityLogDto>(), 0, pagination.Page, pagination.PageSize)));
     }
 
-    public Task<Result<List<EmergencyContactDto>>> GetEmergencyContactsAsync(Guid driverId)
+    public async Task<Result<List<EmergencyContactDto>>> GetEmergencyContactsAsync(Guid driverId)
     {
-        // TODO: Query from EmergencyContacts table
-        return Task.FromResult(Result<List<EmergencyContactDto>>.Success(new List<EmergencyContactDto>()));
+        var repo = _unitOfWork.GetRepository<EmergencyContact, Guid>();
+        var spec = new EmergencyContactsByDriverSpec(driverId);
+        var contacts = await repo.ListAsync(spec);
+
+        var dtos = contacts.Select(c => new EmergencyContactDto
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Phone = c.Phone,
+            Relationship = c.Relationship
+        }).ToList();
+
+        return Result<List<EmergencyContactDto>>.Success(dtos);
     }
 
-    public Task<Result<EmergencyContactDto>> AddEmergencyContactAsync(Guid driverId, CreateEmergencyContactDto dto)
+    public async Task<Result<EmergencyContactDto>> AddEmergencyContactAsync(Guid driverId, CreateEmergencyContactDto dto)
     {
-        // TODO: Add to EmergencyContacts table
-        return Task.FromResult(Result<EmergencyContactDto>.Success(new EmergencyContactDto
+        var repo = _unitOfWork.GetRepository<EmergencyContact, Guid>();
+
+        var contact = new EmergencyContact
         {
-            Id = Guid.NewGuid(),
+            DriverId = driverId,
             Name = dto.Name,
             Phone = EgyptianPhoneHelper.Normalize(dto.Phone),
             Relationship = dto.Relationship
-        }));
+        };
+
+        await repo.AddAsync(contact);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<EmergencyContactDto>.Success(new EmergencyContactDto
+        {
+            Id = contact.Id,
+            Name = contact.Name,
+            Phone = contact.Phone,
+            Relationship = contact.Relationship
+        });
     }
 
-    public Task<Result<bool>> DeleteEmergencyContactAsync(Guid driverId, Guid contactId)
+    public async Task<Result<bool>> DeleteEmergencyContactAsync(Guid driverId, Guid contactId)
     {
-        // TODO: Delete from EmergencyContacts table
-        return Task.FromResult(Result<bool>.Success(true));
+        var repo = _unitOfWork.GetRepository<EmergencyContact, Guid>();
+        var contact = await repo.GetByIdAsync(contactId);
+
+        if (contact == null || contact.DriverId != driverId)
+            return Result<bool>.NotFound(ErrorMessages.ItemNotFound);
+
+        repo.Delete(contact);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<bool>.Success(true);
     }
 
     public Task<Result<SubscriptionDto>> GetSubscriptionAsync(Guid driverId)
@@ -239,4 +274,13 @@ public class ProfileService : IProfileService
         JoinedAt = driver.CreatedAt,
         ReferralCode = driver.Id.ToString()[..8].ToUpper()
     };
+}
+
+internal class EmergencyContactsByDriverSpec : BaseSpecification<EmergencyContact>
+{
+    public EmergencyContactsByDriverSpec(Guid driverId)
+    {
+        SetCriteria(c => c.DriverId == driverId);
+        SetOrderBy(c => c.SortOrder);
+    }
 }

@@ -56,6 +56,8 @@ public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid
     public DbSet<RefundRequest> RefundRequests => Set<RefundRequest>();
     public DbSet<SurgePricingRule> SurgePricingRules => Set<SurgePricingRule>();
 
+    public DbSet<EmergencyContact> EmergencyContacts => Set<EmergencyContact>();
+
     // Phase 5: Communication
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
