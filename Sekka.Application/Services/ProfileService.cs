@@ -52,16 +52,24 @@ public class ProfileService : IProfileService
         return Result<DriverProfileDto>.Success(MapToDto(driver));
     }
 
+    private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+    private const long MaxImageSize = 5 * 1024 * 1024; // 5MB
+
     public async Task<Result<string>> UploadProfileImageAsync(Guid driverId, Stream imageStream, string fileName)
     {
         var driver = await _userManager.FindByIdAsync(driverId.ToString());
         if (driver == null) return Result<string>.NotFound(ErrorMessages.DriverNotFound);
 
         var ext = Path.GetExtension(fileName).ToLower();
-        var dir = Path.Combine("wwwroot", "uploads", "profiles", driverId.ToString());
+        if (!AllowedImageExtensions.Contains(ext))
+            return Result<string>.BadRequest("نوع الملف غير مسموح. الأنواع المسموحة: jpg, png, webp");
+
+        var uploadsBase = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "uploads");
+        var dir = Path.Combine(uploadsBase, "profiles", driverId.ToString());
         Directory.CreateDirectory(dir);
 
-        var savedName = $"profile_{Guid.NewGuid():N}{ext}";
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var savedName = $"{Guid.NewGuid():N}_{timestamp}{ext}";
         var filePath = Path.Combine(dir, savedName);
         using (var fs = new FileStream(filePath, FileMode.Create))
             await imageStream.CopyToAsync(fs);
@@ -81,7 +89,8 @@ public class ProfileService : IProfileService
 
         if (!string.IsNullOrEmpty(driver.ProfileImageUrl))
         {
-            var filePath = Path.Combine("wwwroot", driver.ProfileImageUrl.TrimStart('/'));
+            var uploadsBase = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "uploads");
+            var filePath = Path.Combine(uploadsBase, driver.ProfileImageUrl.TrimStart('/').Replace("uploads/", ""));
             if (File.Exists(filePath)) File.Delete(filePath);
         }
 
@@ -97,10 +106,15 @@ public class ProfileService : IProfileService
         if (driver == null) return Result<string>.NotFound(ErrorMessages.DriverNotFound);
 
         var ext = Path.GetExtension(fileName).ToLower();
-        var dir = Path.Combine("wwwroot", "uploads", "licenses", driverId.ToString());
+        if (!AllowedImageExtensions.Contains(ext))
+            return Result<string>.BadRequest("نوع الملف غير مسموح. الأنواع المسموحة: jpg, png, webp");
+
+        var uploadsBase = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "uploads");
+        var dir = Path.Combine(uploadsBase, "licenses", driverId.ToString());
         Directory.CreateDirectory(dir);
 
-        var savedName = $"license_{Guid.NewGuid():N}{ext}";
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var savedName = $"{Guid.NewGuid():N}_{timestamp}{ext}";
         var filePath = Path.Combine(dir, savedName);
         using (var fs = new FileStream(filePath, FileMode.Create))
             await imageStream.CopyToAsync(fs);

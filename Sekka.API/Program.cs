@@ -379,6 +379,16 @@ app.UseSwaggerUI(options =>
 // Phase 3: ASP.NET Core Built-in Pipeline
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// Serve uploaded files from App_Data/uploads (persists across publish)
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "App_Data", "uploads");
+Directory.CreateDirectory(uploadsPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
+
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
