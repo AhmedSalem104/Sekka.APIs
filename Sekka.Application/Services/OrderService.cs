@@ -29,13 +29,19 @@ public class OrderService : IOrderService
     {
         var repo = _unitOfWork.GetRepository<Order, Guid>();
 
-        if (!string.IsNullOrEmpty(dto.IdempotencyKey))
+        // Normalize idempotency key — ignore default/placeholder values
+        var idempotencyKey = dto.IdempotencyKey?.Trim();
+        if (string.IsNullOrEmpty(idempotencyKey) || idempotencyKey == "string")
+            idempotencyKey = null;
+
+        if (idempotencyKey != null)
         {
-            var existing = (await repo.ListAsync(new OrderByIdempotencyKeySpec(dto.IdempotencyKey))).FirstOrDefault();
+            var existing = (await repo.ListAsync(new OrderByIdempotencyKeySpec(idempotencyKey))).FirstOrDefault();
             if (existing != null)
-                return Result<OrderDto>.Conflict(ErrorMessages.InvalidIdempotencyKey);
+                return Result<OrderDto>.Success(_mapper.Map<OrderDto>(existing)); // Return existing order (idempotent)
         }
 
+        dto.IdempotencyKey = idempotencyKey;
         var order = _mapper.Map<Order>(dto);
         order.DriverId = driverId;
         order.OrderNumber = await GenerateOrderNumber();
