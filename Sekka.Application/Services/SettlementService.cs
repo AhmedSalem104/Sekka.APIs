@@ -27,11 +27,26 @@ public class SettlementService : ISettlementService
         var spec = new SettlementsByDriverSpec(driverId, filter.PartnerId, filter.SettlementType, filter.DateFrom, filter.DateTo);
         var settlements = await repo.ListAsync(spec);
 
+        // Load partner names
+        var partnerRepo = _unitOfWork.GetRepository<Partner, Guid>();
+        var partnerIds = settlements.Select(s => s.PartnerId).Distinct().ToList();
+        var partners = new Dictionary<Guid, string>();
+        foreach (var pid in partnerIds)
+        {
+            var p = await partnerRepo.GetByIdAsync(pid);
+            if (p != null) partners[pid] = p.Name;
+        }
+
         var dtos = settlements
             .OrderByDescending(s => s.SettledAt)
             .Skip((filter.Page - 1) * filter.PageSize)
             .Take(filter.PageSize)
-            .Select(MapToDto)
+            .Select(s =>
+            {
+                var dto = MapToDto(s);
+                dto.PartnerName = partners.GetValueOrDefault(s.PartnerId);
+                return dto;
+            })
             .ToList();
 
         return Result<List<SettlementDto>>.Success(dtos);
@@ -83,7 +98,9 @@ public class SettlementService : ISettlementService
         _logger.LogInformation("Settlement {SettlementId} created for driver {DriverId}, partner {PartnerId}, amount {Amount}",
             settlement.Id, driverId, dto.PartnerId, dto.Amount);
 
-        return Result<SettlementDto>.Success(MapToDto(settlement));
+        var resultDto = MapToDto(settlement);
+        resultDto.PartnerName = partner.Name;
+        return Result<SettlementDto>.Success(resultDto);
     }
 
     public async Task<Result<PartnerBalanceDto>> GetPartnerBalanceAsync(Guid driverId, Guid partnerId)
