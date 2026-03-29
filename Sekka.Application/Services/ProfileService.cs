@@ -52,26 +52,65 @@ public class ProfileService : IProfileService
         return Result<DriverProfileDto>.Success(MapToDto(driver));
     }
 
-    public Task<Result<string>> UploadProfileImageAsync(Guid driverId, Stream imageStream, string fileName)
+    public async Task<Result<string>> UploadProfileImageAsync(Guid driverId, Stream imageStream, string fileName)
     {
-        // TODO: Implement file upload to wwwroot/uploads/profiles/{driverId}/
-        var imageUrl = $"/uploads/profiles/{driverId}/profile{Path.GetExtension(fileName)}";
-        _logger.LogInformation("Profile image uploaded for driver {DriverId}: {Url}", driverId, imageUrl);
-        return Task.FromResult(Result<string>.Success(imageUrl));
+        var driver = await _userManager.FindByIdAsync(driverId.ToString());
+        if (driver == null) return Result<string>.NotFound(ErrorMessages.DriverNotFound);
+
+        var ext = Path.GetExtension(fileName).ToLower();
+        var dir = Path.Combine("wwwroot", "uploads", "profiles", driverId.ToString());
+        Directory.CreateDirectory(dir);
+
+        var savedName = $"profile_{Guid.NewGuid():N}{ext}";
+        var filePath = Path.Combine(dir, savedName);
+        using (var fs = new FileStream(filePath, FileMode.Create))
+            await imageStream.CopyToAsync(fs);
+
+        var imageUrl = $"/uploads/profiles/{driverId}/{savedName}";
+        driver.ProfileImageUrl = imageUrl;
+        driver.UpdatedAt = DateTime.UtcNow;
+        await _userManager.UpdateAsync(driver);
+
+        return Result<string>.Success(imageUrl);
     }
 
-    public Task<Result<bool>> DeleteProfileImageAsync(Guid driverId)
+    public async Task<Result<bool>> DeleteProfileImageAsync(Guid driverId)
     {
-        // TODO: Delete file from wwwroot/uploads/profiles/{driverId}/
-        _logger.LogInformation("Profile image deleted for driver {DriverId}", driverId);
-        return Task.FromResult(Result<bool>.Success(true));
+        var driver = await _userManager.FindByIdAsync(driverId.ToString());
+        if (driver == null) return Result<bool>.NotFound(ErrorMessages.DriverNotFound);
+
+        if (!string.IsNullOrEmpty(driver.ProfileImageUrl))
+        {
+            var filePath = Path.Combine("wwwroot", driver.ProfileImageUrl.TrimStart('/'));
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
+
+        driver.ProfileImageUrl = null;
+        driver.UpdatedAt = DateTime.UtcNow;
+        await _userManager.UpdateAsync(driver);
+        return Result<bool>.Success(true);
     }
 
-    public Task<Result<string>> UploadLicenseImageAsync(Guid driverId, Stream imageStream, string fileName)
+    public async Task<Result<string>> UploadLicenseImageAsync(Guid driverId, Stream imageStream, string fileName)
     {
-        var imageUrl = $"/uploads/profiles/{driverId}/license{Path.GetExtension(fileName)}";
-        _logger.LogInformation("License image uploaded for driver {DriverId}: {Url}", driverId, imageUrl);
-        return Task.FromResult(Result<string>.Success(imageUrl));
+        var driver = await _userManager.FindByIdAsync(driverId.ToString());
+        if (driver == null) return Result<string>.NotFound(ErrorMessages.DriverNotFound);
+
+        var ext = Path.GetExtension(fileName).ToLower();
+        var dir = Path.Combine("wwwroot", "uploads", "licenses", driverId.ToString());
+        Directory.CreateDirectory(dir);
+
+        var savedName = $"license_{Guid.NewGuid():N}{ext}";
+        var filePath = Path.Combine(dir, savedName);
+        using (var fs = new FileStream(filePath, FileMode.Create))
+            await imageStream.CopyToAsync(fs);
+
+        var imageUrl = $"/uploads/licenses/{driverId}/{savedName}";
+        driver.LicenseImageUrl = imageUrl;
+        driver.UpdatedAt = DateTime.UtcNow;
+        await _userManager.UpdateAsync(driver);
+
+        return Result<string>.Success(imageUrl);
     }
 
     public async Task<Result<ProfileCompletionDto>> GetCompletionAsync(Guid driverId)
