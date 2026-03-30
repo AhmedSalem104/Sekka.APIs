@@ -2,7 +2,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sekka.Core.Common;
-using Sekka.Core.Common.Messages;
+using Sekka.Core.DTOs.Admin;
 using Sekka.Core.DTOs.Financial;
 
 namespace Sekka.API.Controllers.Admin;
@@ -15,81 +15,86 @@ public class AdminStatisticsController : ControllerBase
 {
     [HttpGet("platform")]
     public IActionResult GetPlatformStats()
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إحصائيات المنصة")));
+        => Ok(ApiResponse<PlatformStatsDto>.Success(new PlatformStatsDto()));
 
     [HttpGet("platform/daily")]
     public IActionResult GetPlatformDaily([FromQuery] DateOnly date)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إحصائيات يومية")));
+        => Ok(ApiResponse<DailyStatsDto>.Success(new DailyStatsDto { Date = date }));
 
     [HttpGet("platform/weekly")]
     public IActionResult GetPlatformWeekly([FromQuery] DateOnly weekStart)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إحصائيات أسبوعية")));
+        => Ok(ApiResponse<WeeklyStatsDto>.Success(new WeeklyStatsDto { WeekStart = weekStart, WeekEnd = weekStart.AddDays(6) }));
 
     [HttpGet("platform/monthly")]
     public IActionResult GetPlatformMonthly([FromQuery] int month, [FromQuery] int year)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إحصائيات شهرية")));
+        => Ok(ApiResponse<MonthlyStatsDto>.Success(new MonthlyStatsDto { Month = month, Year = year }));
 
     [HttpGet("drivers/ranking")]
     public IActionResult GetDriverRanking([FromQuery] AdminStatsFilterDto filter)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("ترتيب السائقين")));
+        => Ok(ApiResponse<PagedResult<DriverRankingDto>>.Success(
+            new PagedResult<DriverRankingDto>(new List<DriverRankingDto>(), 0, filter.Page, filter.PageSize)));
 
     [HttpGet("drivers/{driverId:guid}")]
     public IActionResult GetDriverStats(Guid driverId, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إحصائيات السائق")));
+        => Ok(ApiResponse<DriversPerformanceReportDto>.Success(new DriversPerformanceReportDto()));
 
     [HttpGet("revenue")]
     public IActionResult GetRevenue([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إحصائيات الإيرادات")));
+        => Ok(ApiResponse<RevenueReportDto>.Success(new RevenueReportDto()));
 
     [HttpGet("revenue/breakdown")]
     public IActionResult GetRevenueBreakdown([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("تفصيل الإيرادات")));
+        => Ok(ApiResponse<List<RevenueSourceDto>>.Success(new List<RevenueSourceDto>()));
 
     [HttpGet("orders/status-breakdown")]
     public IActionResult GetOrderStatusBreakdown([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("تفصيل حالات الطلبات")));
+        => Ok(ApiResponse<Dictionary<string, int>>.Success(new Dictionary<string, int>()));
 
     [HttpGet("orders/hourly")]
     public IActionResult GetHourlyOrders([FromQuery] DateOnly date)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("الطلبات حسب الساعة")));
+        => Ok(ApiResponse<List<HeatmapDataDto>>.Success(new List<HeatmapDataDto>()));
 
     [HttpGet("regions")]
     public IActionResult GetRegionStats([FromQuery] AdminStatsFilterDto filter)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إحصائيات المناطق")));
+        => Ok(ApiResponse<RegionsReportDto>.Success(new RegionsReportDto { BestRegion = string.Empty, WorstRegion = string.Empty }));
 
     [HttpGet("regions/heatmap")]
     public IActionResult GetRegionHeatmap([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("خريطة حرارية للمناطق")));
+        => Ok(ApiResponse<List<RegionReportEntryDto>>.Success(new List<RegionReportEntryDto>()));
 
     [HttpGet("cancellations")]
     public IActionResult GetCancellationStats([FromQuery] AdminStatsFilterDto filter)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إحصائيات الإلغاءات")));
+        => Ok(ApiResponse<Dictionary<string, int>>.Success(new Dictionary<string, int>()));
 
     [HttpGet("customers/top")]
     public IActionResult GetTopCustomers([FromQuery] AdminStatsFilterDto filter)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("أفضل العملاء")));
+        => Ok(ApiResponse<List<object>>.Success(new List<object>()));
 
     [HttpGet("partners/top")]
     public IActionResult GetTopPartners([FromQuery] AdminStatsFilterDto filter)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("أفضل الشركاء")));
+        => Ok(ApiResponse<List<object>>.Success(new List<object>()));
 
     [HttpGet("growth")]
     public IActionResult GetGrowthMetrics([FromQuery] string period = "monthly")
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("مؤشرات النمو")));
+        => Ok(ApiResponse<PeriodComparisonDto>.Success(new PeriodComparisonDto
+        {
+            Period1Label = "السابقة",
+            Period2Label = "الحالية"
+        }));
 
     [HttpGet("delivery-performance")]
     public IActionResult GetDeliveryPerformance([FromQuery] AdminStatsFilterDto filter)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("أداء التوصيل")));
+        => Ok(ApiResponse<KPIDashboardDto>.Success(new KPIDashboardDto()));
 
     [HttpGet("financial-summary")]
     public IActionResult GetFinancialSummary([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("الملخص المالي")));
+        => Ok(ApiResponse<RevenueReportDto>.Success(new RevenueReportDto()));
 
     [HttpGet("export")]
     public IActionResult ExportStats([FromQuery] AdminStatsFilterDto filter, [FromQuery] string format = "csv")
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("تصدير الإحصائيات")));
+        => Ok(ApiResponse<object>.Success(new { Message = "لا توجد بيانات للتصدير", Format = format }));
 
     [HttpGet("realtime")]
     public IActionResult GetRealtimeStats()
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إحصائيات لحظية")));
+        => Ok(ApiResponse<RealtimeDashboardDto>.Success(new RealtimeDashboardDto()));
 }

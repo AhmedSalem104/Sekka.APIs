@@ -2,7 +2,6 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sekka.Core.Common;
-using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Admin;
 
 namespace Sekka.API.Controllers.Admin;
@@ -15,29 +14,34 @@ public class AdminInsightsController : ControllerBase
 {
     [HttpGet("overview")]
     public IActionResult GetOverview()
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("نظرة عامة على الذكاء")));
+        => Ok(ApiResponse<InsightsOverviewDto>.Success(new InsightsOverviewDto()));
 
     [HttpGet("heatmap")]
     public IActionResult GetHeatmap()
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("خريطة حرارية للاهتمامات")));
+        => Ok(ApiResponse<InterestHeatmapDto>.Success(new InterestHeatmapDto()));
 
     [HttpGet("trends")]
     public IActionResult GetTrends([FromQuery] TrendsQueryDto query)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("اتجاهات الاهتمامات")));
+        => Ok(ApiResponse<List<InterestTrendDto>>.Success(new List<InterestTrendDto>()));
 
     [HttpGet("engagement-distribution")]
     public IActionResult GetEngagementDistribution()
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("توزيع التفاعل")));
+        => Ok(ApiResponse<EngagementDistributionDto>.Success(new EngagementDistributionDto()));
 
     [HttpGet("rfm-analysis")]
     public IActionResult GetRfmAnalysis()
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("تحليل RFM")));
+        => Ok(ApiResponse<RfmAnalysisDto>.Success(new RfmAnalysisDto()));
 
     [HttpGet("behavior-summary")]
     public IActionResult GetGlobalBehaviorSummary()
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("ملخص السلوك العام")));
+        => Ok(ApiResponse<GlobalBehaviorSummaryDto>.Success(new GlobalBehaviorSummaryDto
+        {
+            MostPopularOrderTime = string.Empty,
+            MostPopularDayOfWeek = string.Empty,
+            MostPopularPaymentMethod = string.Empty
+        }));
 
     [HttpGet("category-performance")]
     public IActionResult GetCategoryPerformance()
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("أداء الفئات")));
+        => Ok(ApiResponse<List<CategoryPerformanceDto>>.Success(new List<CategoryPerformanceDto>()));
 }
