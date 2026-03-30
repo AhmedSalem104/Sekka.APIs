@@ -11,4 +11,5 @@ public class RegisterDto
     public string Name { get; set; } = null!;
     public VehicleType VehicleType { get; set; }
     public string? Email { get; set; }
+    public string? ReferralCode { get; set; }
 }

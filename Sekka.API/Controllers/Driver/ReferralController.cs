@@ -31,13 +31,13 @@ public class ReferralController : ControllerBase
     public async Task<IActionResult> GetStats()
         => ToActionResult(await _referralService.GetStatsAsync(GetDriverId()));
 
-    [HttpPost("apply")]
-    public async Task<IActionResult> ApplyCode([FromBody] ApplyReferralCodeDto dto)
-        => ToActionResult(await _referralService.ApplyCodeAsync(GetDriverId(), dto));
-
     [HttpGet]
     public async Task<IActionResult> GetMyReferrals()
         => ToActionResult(await _referralService.GetMyReferralsAsync(GetDriverId()));
+
+    [HttpPost("apply")]
+    public async Task<IActionResult> ApplyReferralCode([FromBody] ApplyReferralCodeDto dto)
+        => ToActionResult(await _referralService.ApplyCodeAsync(GetDriverId(), dto));
 
     private IActionResult ToActionResult<T>(Result<T> result, int successCode = 200, string? message = null)
     {

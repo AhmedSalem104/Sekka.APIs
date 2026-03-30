@@ -12,6 +12,7 @@ using Sekka.Core.DTOs.Auth;
 using Sekka.Core.DTOs.Profile;
 using Sekka.Core.Interfaces.Services;
 using Sekka.Persistence.Entities;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Sekka.Application.Services;
 
@@ -20,17 +21,20 @@ public class AuthService : IAuthService
     private readonly UserManager<Driver> _userManager;
     private readonly ISmsService _smsService;
     private readonly IConfiguration _config;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         UserManager<Driver> userManager,
         ISmsService smsService,
         IConfiguration config,
+        IServiceProvider serviceProvider,
         ILogger<AuthService> logger)
     {
         _userManager = userManager;
         _smsService = smsService;
         _config = config;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -84,6 +88,25 @@ public class AuthService : IAuthService
         }
 
         await _userManager.AddToRoleAsync(driver, "Driver");
+
+        // Process referral code if provided
+        if (!string.IsNullOrEmpty(dto.ReferralCode))
+        {
+            try
+            {
+                var referralService = _serviceProvider.GetRequiredService<IReferralService>();
+                await referralService.ApplyCodeAsync(driver.Id, new Core.DTOs.Social.ApplyReferralCodeDto
+                {
+                    ReferralCode = dto.ReferralCode
+                });
+                _logger.LogInformation("Referral code {Code} applied for driver {DriverId}", dto.ReferralCode, driver.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to apply referral code {Code} for driver {DriverId}", dto.ReferralCode, driver.Id);
+                // Don't fail registration if referral fails
+            }
+        }
 
         _logger.LogInformation("Driver {DriverId} registered", driver.Id);
         return Result<AuthResponseDto>.Success(await BuildAuthResponseAsync(driver, isNewUser: true));

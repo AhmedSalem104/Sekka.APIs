@@ -24,87 +24,200 @@ public class ReferralService : IReferralService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Get or generate the driver's unique referral code
+    /// </summary>
     public async Task<Result<ReferralCodeDto>> GetMyCodeAsync(Guid driverId)
     {
-        // The referral code is derived from the driver's ID (first 8 chars uppercase)
+        var code = await GetOrCreateReferralCode(driverId);
+
         var repo = _unitOfWork.GetRepository<Referral, Guid>();
-        var spec = new ReferralsByReferrerSpec(driverId);
-        var referrals = await repo.ListAsync(spec);
+        var allReferrals = await repo.ListAsync(new ReferralsByReferrerSpec(driverId));
 
-        // Use existing code from first referral or generate one
-        var code = referrals.FirstOrDefault()?.ReferralCode
-            ?? $"SEK-{driverId.ToString("N")[..8].ToUpperInvariant()}";
-
-        var dto = new ReferralCodeDto
+        return Result<ReferralCodeDto>.Success(new ReferralCodeDto
         {
             ReferralCode = code,
-            ShareUrl = $"https://sekka.app/join?ref={code}"
-        };
-
-        return Result<ReferralCodeDto>.Success(dto);
+            ShareUrl = $"https://sekka.app/join?ref={code}",
+            ShareMessage = $"سجّل في سِكّة واستخدم كود الدعوة بتاعي: {code}\n\nhttps://sekka.app/join?ref={code}",
+            TotalReferred = allReferrals.Count(r => r.Status >= ReferralStatus.Registered),
+            TotalRewards = allReferrals.Count(r => r.ReferrerRewardGiven) * 50m
+        });
     }
 
+    /// <summary>
+    /// Get referral statistics for the driver
+    /// </summary>
     public async Task<Result<ReferralStatsDto>> GetStatsAsync(Guid driverId)
     {
+        var code = await GetOrCreateReferralCode(driverId);
+
         var repo = _unitOfWork.GetRepository<Referral, Guid>();
-        var spec = new ReferralsByReferrerSpec(driverId);
-        var referrals = await repo.ListAsync(spec);
+        var referrals = await repo.ListAsync(new ReferralsByReferrerSpec(driverId));
 
-        var code = referrals.FirstOrDefault()?.ReferralCode
-            ?? $"SEK-{driverId.ToString("N")[..8].ToUpperInvariant()}";
+        var driverRepo = _unitOfWork.GetRepository<Driver, Guid>();
 
-        var stats = new ReferralStatsDto
+        var recentDtos = new List<ReferralDto>();
+        foreach (var r in referrals.OrderByDescending(r => r.CreatedAt).Take(10))
+        {
+            Driver? referred = r.ReferredDriverId.HasValue
+                ? await driverRepo.GetByIdAsync(r.ReferredDriverId.Value) : null;
+
+            recentDtos.Add(new ReferralDto
+            {
+                Id = r.Id,
+                ReferredDriverName = referred?.Name,
+                ReferredPhone = r.ReferredPhone,
+                Status = r.Status,
+                StatusText = GetStatusText(r.Status),
+                RewardType = r.RewardType,
+                RewardGiven = r.RewardGiven,
+                CreatedAt = r.CreatedAt,
+                RegisteredAt = r.RegisteredAt,
+                RewardedAt = r.RewardedAt
+            });
+        }
+
+        return Result<ReferralStatsDto>.Success(new ReferralStatsDto
         {
             ReferralCode = code,
+            ShareUrl = $"https://sekka.app/join?ref={code}",
             TotalReferrals = referrals.Count,
-            CompletedReferrals = referrals.Count(r => r.Status == ReferralStatus.Rewarded),
             PendingReferrals = referrals.Count(r => r.Status == ReferralStatus.Pending),
-            TotalPointsEarned = referrals.Count(r => r.RewardGiven) * 50 // 50 points per completed referral
-        };
-
-        return Result<ReferralStatsDto>.Success(stats);
+            CompletedReferrals = referrals.Count(r => r.Status == ReferralStatus.Registered),
+            RewardedReferrals = referrals.Count(r => r.Status == ReferralStatus.Rewarded),
+            TotalPointsEarned = referrals.Count(r => r.ReferrerRewardGiven) * 100,
+            TotalCashEarned = referrals.Count(r => r.ReferrerRewardGiven) * 50m,
+            RecentReferrals = recentDtos
+        });
     }
 
-    public async Task<Result<ReferralDto>> ApplyCodeAsync(Guid driverId, ApplyReferralCodeDto dto)
+    /// <summary>
+    /// Apply a referral code during registration (called from AuthService)
+    /// </summary>
+    public async Task<Result<ReferralDto>> ApplyCodeAsync(Guid newDriverId, ApplyReferralCodeDto dto)
     {
+        var code = dto.ReferralCode?.Trim().ToUpperInvariant();
+        if (string.IsNullOrEmpty(code))
+            return Result<ReferralDto>.BadRequest("كود الإحالة مطلوب");
+
         var repo = _unitOfWork.GetRepository<Referral, Guid>();
 
-        // Find the referral entry by code
-        var spec = new ReferralByCodeSpec(dto.ReferralCode);
-        var referrals = await repo.ListAsync(spec);
-        var referral = referrals.FirstOrDefault();
+        // Find the referrer (the person who owns this code)
+        var referrerSpec = new ReferralsByCodeOwnerSpec(code);
+        var existingReferrals = await repo.ListAsync(referrerSpec);
+        var sampleReferral = existingReferrals.FirstOrDefault();
 
-        if (referral is null)
-            return Result<ReferralDto>.NotFound("كود الإحالة غير موجود");
+        Guid referrerDriverId;
+        if (sampleReferral != null)
+        {
+            referrerDriverId = sampleReferral.ReferrerDriverId;
+        }
+        else
+        {
+            // Code might be driver ID based — try to find driver
+            var driverRepo = _unitOfWork.GetRepository<Driver, Guid>();
+            var allDrivers = await driverRepo.ListAsync(new AllDriversSpec());
+            var referrer = allDrivers.FirstOrDefault(d =>
+                d.Id.ToString("N")[..8].ToUpperInvariant() == code ||
+                d.Id.ToString()[..8].ToUpperInvariant() == code);
 
-        if (referral.ReferrerDriverId == driverId)
+            if (referrer == null)
+                return Result<ReferralDto>.NotFound("كود الإحالة غير صحيح");
+
+            referrerDriverId = referrer.Id;
+        }
+
+        if (referrerDriverId == newDriverId)
             return Result<ReferralDto>.BadRequest("لا يمكنك استخدام كود الإحالة الخاص بك");
 
-        if (referral.ReferredDriverId.HasValue)
-            return Result<ReferralDto>.BadRequest("كود الإحالة مستخدم بالفعل");
+        // Check if already referred
+        var existingForDriver = await repo.ListAsync(new ReferralByReferredDriverSpec(newDriverId));
+        if (existingForDriver.Any())
+            return Result<ReferralDto>.BadRequest("لقد استخدمت كود إحالة بالفعل");
 
-        // Link the referred driver
-        referral.ReferredDriverId = driverId;
-        referral.Status = ReferralStatus.Registered;
-        referral.RegisteredAt = DateTime.UtcNow;
+        // Create the referral record
+        var newDriver = await _unitOfWork.GetRepository<Driver, Guid>().GetByIdAsync(newDriverId);
 
-        repo.Update(referral);
+        var referral = new Referral
+        {
+            ReferrerDriverId = referrerDriverId,
+            ReferredDriverId = newDriverId,
+            ReferralCode = code,
+            ReferredPhone = newDriver?.PhoneNumber,
+            Status = ReferralStatus.Registered,
+            RewardType = RewardType.Points,
+            RegisteredAt = DateTime.UtcNow
+        };
+
+        await repo.AddAsync(referral);
         await _unitOfWork.SaveChangesAsync();
 
-        _logger.LogInformation("Driver {DriverId} applied referral code {Code}", driverId, dto.ReferralCode);
+        _logger.LogInformation("Referral applied: {NewDriverId} used code {Code} from {ReferrerId}",
+            newDriverId, code, referrerDriverId);
 
-        return Result<ReferralDto>.Success(_mapper.Map<ReferralDto>(referral));
+        return Result<ReferralDto>.Success(new ReferralDto
+        {
+            Id = referral.Id,
+            ReferredDriverName = newDriver?.Name,
+            ReferredPhone = referral.ReferredPhone,
+            Status = referral.Status,
+            StatusText = GetStatusText(referral.Status),
+            RewardType = referral.RewardType,
+            RewardGiven = false,
+            CreatedAt = referral.CreatedAt,
+            RegisteredAt = referral.RegisteredAt
+        });
     }
 
+    /// <summary>
+    /// Get all referrals for a driver
+    /// </summary>
     public async Task<Result<List<ReferralDto>>> GetMyReferralsAsync(Guid driverId)
     {
         var repo = _unitOfWork.GetRepository<Referral, Guid>();
-        var spec = new ReferralsByReferrerSpec(driverId);
-        var referrals = await repo.ListAsync(spec);
+        var referrals = await repo.ListAsync(new ReferralsByReferrerSpec(driverId));
+        var driverRepo = _unitOfWork.GetRepository<Driver, Guid>();
 
-        var dtos = _mapper.Map<List<ReferralDto>>(referrals);
+        var dtos = new List<ReferralDto>();
+        foreach (var r in referrals.OrderByDescending(r => r.CreatedAt))
+        {
+            Driver? referred = r.ReferredDriverId.HasValue
+                ? await driverRepo.GetByIdAsync(r.ReferredDriverId.Value) : null;
+
+            dtos.Add(new ReferralDto
+            {
+                Id = r.Id,
+                ReferredDriverName = referred?.Name,
+                ReferredPhone = r.ReferredPhone,
+                Status = r.Status,
+                StatusText = GetStatusText(r.Status),
+                RewardType = r.RewardType,
+                RewardGiven = r.RewardGiven,
+                CreatedAt = r.CreatedAt,
+                RegisteredAt = r.RegisteredAt,
+                RewardedAt = r.RewardedAt
+            });
+        }
+
         return Result<List<ReferralDto>>.Success(dtos);
     }
+
+    // ── Helpers ──
+
+    private async Task<string> GetOrCreateReferralCode(Guid driverId)
+    {
+        // Generate deterministic code from driver ID
+        return driverId.ToString("N")[..8].ToUpperInvariant();
+    }
+
+    private static string GetStatusText(ReferralStatus status) => status switch
+    {
+        ReferralStatus.Pending => "في الانتظار",
+        ReferralStatus.Registered => "تم التسجيل",
+        ReferralStatus.Rewarded => "تم المكافأة",
+        ReferralStatus.Expired => "منتهي",
+        _ => "غير معروف"
+    };
 }
 
 // ── Specifications ──
@@ -114,13 +227,30 @@ internal class ReferralsByReferrerSpec : BaseSpecification<Referral>
     public ReferralsByReferrerSpec(Guid driverId)
     {
         SetCriteria(r => r.ReferrerDriverId == driverId);
+        SetOrderByDescending(r => r.CreatedAt);
     }
 }
 
-internal class ReferralByCodeSpec : BaseSpecification<Referral>
+internal class ReferralsByCodeOwnerSpec : BaseSpecification<Referral>
 {
-    public ReferralByCodeSpec(string code)
+    public ReferralsByCodeOwnerSpec(string code)
     {
         SetCriteria(r => r.ReferralCode == code);
+    }
+}
+
+internal class ReferralByReferredDriverSpec : BaseSpecification<Referral>
+{
+    public ReferralByReferredDriverSpec(Guid driverId)
+    {
+        SetCriteria(r => r.ReferredDriverId == driverId);
+    }
+}
+
+internal class AllDriversSpec : BaseSpecification<Driver>
+{
+    public AllDriversSpec()
+    {
+        SetCriteria(d => d.IsActive);
     }
 }
