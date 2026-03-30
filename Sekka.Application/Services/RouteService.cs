@@ -56,7 +56,7 @@ public class RouteService : IRouteService
         await repo.AddAsync(route);
         await _unitOfWork.SaveChangesAsync();
 
-        return Result<RouteDto>.Success(MapRouteToDto(route));
+        return Result<RouteDto>.Success(await MapRouteToDtoWithOrders(route));
     }
 
     public async Task<Result<RouteDto>> GetActiveRouteAsync(Guid driverId)
@@ -71,7 +71,7 @@ public class RouteService : IRouteService
         if (route is null)
             return Result<RouteDto>.NotFound("لا يوجد مسار نشط");
 
-        return Result<RouteDto>.Success(MapRouteToDto(route));
+        return Result<RouteDto>.Success(await MapRouteToDtoWithOrders(route));
     }
 
     public async Task<Result<RouteDto>> ReorderRouteAsync(Guid driverId, Guid routeId, ReorderRouteDto dto)
@@ -89,7 +89,7 @@ public class RouteService : IRouteService
         repo.Update(route);
         await _unitOfWork.SaveChangesAsync();
 
-        return Result<RouteDto>.Success(MapRouteToDto(route));
+        return Result<RouteDto>.Success(await MapRouteToDtoWithOrders(route));
     }
 
     public async Task<Result<RouteDto>> AddOrderToRouteAsync(Guid driverId, Guid routeId, AddOrderToRouteDto dto)
@@ -116,7 +116,7 @@ public class RouteService : IRouteService
         repo.Update(route);
         await _unitOfWork.SaveChangesAsync();
 
-        return Result<RouteDto>.Success(MapRouteToDto(route));
+        return Result<RouteDto>.Success(await MapRouteToDtoWithOrders(route));
     }
 
     public async Task<Result<RouteDto>> CompleteRouteAsync(Guid driverId, Guid routeId)
@@ -134,12 +134,33 @@ public class RouteService : IRouteService
         repo.Update(route);
         await _unitOfWork.SaveChangesAsync();
 
-        return Result<RouteDto>.Success(MapRouteToDto(route));
+        return Result<RouteDto>.Success(await MapRouteToDtoWithOrders(route));
     }
 
-    private static RouteDto MapRouteToDto(Route route)
+    private async Task<RouteDto> MapRouteToDtoWithOrders(Route route)
     {
         var orderIdStrings = route.OrderIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
+
+        var orders = new List<RouteOrderDto>();
+        for (int idx = 0; idx < orderIdStrings.Length; idx++)
+        {
+            if (Guid.TryParse(orderIdStrings[idx], out var oid))
+            {
+                var order = await orderRepo.GetByIdAsync(oid);
+                orders.Add(new RouteOrderDto
+                {
+                    OrderId = oid,
+                    OrderNumber = order?.OrderNumber ?? "N/A",
+                    SequenceIndex = idx,
+                    CustomerName = order?.CustomerName,
+                    DeliveryAddress = order?.DeliveryAddress ?? "",
+                    Amount = order?.Amount ?? 0,
+                    Status = order?.Status ?? Core.Enums.OrderStatus.Pending
+                });
+            }
+        }
+
         return new RouteDto
         {
             Id = route.Id,
@@ -147,13 +168,7 @@ public class RouteService : IRouteService
             TotalDistanceKm = route.TotalDistanceKm,
             EfficiencyScore = route.EfficiencyScore,
             IsActive = route.IsActive,
-            Orders = orderIdStrings.Select((id, idx) => new RouteOrderDto
-            {
-                OrderId = Guid.TryParse(id, out var oid) ? oid : Guid.Empty,
-                OrderNumber = $"ORD-{idx + 1}",
-                SequenceIndex = idx,
-                DeliveryAddress = string.Empty
-            }).ToList()
+            Orders = orders
         };
     }
 }
