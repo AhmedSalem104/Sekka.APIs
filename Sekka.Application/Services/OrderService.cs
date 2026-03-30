@@ -48,6 +48,34 @@ public class OrderService : IOrderService
         order.Status = OrderStatus.Pending;
         order.AssignedAt = DateTime.UtcNow;
 
+        // Auto-create or link customer if phone provided
+        if (!string.IsNullOrEmpty(dto.CustomerPhone))
+        {
+            var normalizedPhone = Core.Common.EgyptianPhoneHelper.Normalize(dto.CustomerPhone);
+            var customerRepo = _unitOfWork.GetRepository<Customer, Guid>();
+            var existingCustomer = (await customerRepo.ListAsync(new CustomerByDriverPhoneSpec(driverId, normalizedPhone))).FirstOrDefault();
+
+            if (existingCustomer == null)
+            {
+                existingCustomer = new Customer
+                {
+                    DriverId = driverId,
+                    Phone = normalizedPhone,
+                    Name = dto.CustomerName,
+                };
+                await customerRepo.AddAsync(existingCustomer);
+            }
+            else
+            {
+                existingCustomer.TotalDeliveries++;
+                if (!string.IsNullOrEmpty(dto.CustomerName) && string.IsNullOrEmpty(existingCustomer.Name))
+                    existingCustomer.Name = dto.CustomerName;
+                customerRepo.Update(existingCustomer);
+            }
+
+            order.CustomerId = existingCustomer.Id;
+        }
+
         await repo.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
@@ -262,7 +290,18 @@ public class OrderService : IOrderService
         if (order == null || order.DriverId != driverId)
             return Result<OrderPhotoDto>.NotFound(ErrorMessages.OrderNotFound);
 
-        var photoUrl = $"/uploads/orders/{orderId}/{Guid.NewGuid()}{Path.GetExtension(fileName)}";
+        var ext = Path.GetExtension(fileName).ToLower();
+        var uploadsBase = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "uploads");
+        var dir = Path.Combine(uploadsBase, "orders", orderId.ToString());
+        Directory.CreateDirectory(dir);
+
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var savedName = $"{Guid.NewGuid():N}_{timestamp}{ext}";
+        var filePath = Path.Combine(dir, savedName);
+        using (var fs = new FileStream(filePath, FileMode.Create))
+            await fileStream.CopyToAsync(fs);
+
+        var photoUrl = $"/uploads/orders/{orderId}/{savedName}";
 
         var photo = new OrderPhoto
         {
@@ -345,5 +384,13 @@ internal class LatestDriverWalletTxSpec : BaseSpecification<WalletTransaction>
         SetCriteria(t => t.DriverId == driverId);
         SetOrderByDescending(t => t.CreatedAt);
         ApplyPaging(0, 1);
+    }
+}
+
+internal class CustomerByDriverPhoneSpec : BaseSpecification<Customer>
+{
+    public CustomerByDriverPhoneSpec(Guid driverId, string phone)
+    {
+        SetCriteria(c => c.DriverId == driverId && c.Phone == phone);
     }
 }
