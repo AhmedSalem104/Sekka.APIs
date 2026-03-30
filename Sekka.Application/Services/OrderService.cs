@@ -164,6 +164,37 @@ public class OrderService : IOrderService
         order.ActualCollectedAmount = dto.ActualCollectedAmount;
         order.UpdatedAt = DateTime.UtcNow;
         repo.Update(order);
+
+        // Record earning in wallet
+        var earnedAmount = dto.ActualCollectedAmount ?? order.Amount;
+        var txRepo = _unitOfWork.GetRepository<WalletTransaction, Guid>();
+        var latestSpec = new OrdersByDatePrefixSpec(""); // reuse to get latest tx
+        var latestTxs = await txRepo.ListAsync(new LatestDriverWalletTxSpec(driverId));
+        var currentBalance = latestTxs.FirstOrDefault()?.BalanceAfter ?? 0;
+
+        var walletTx = new WalletTransaction
+        {
+            DriverId = driverId,
+            OrderId = orderId,
+            Amount = earnedAmount,
+            TransactionType = Core.Enums.TransactionType.OrderPayment,
+            BalanceAfter = currentBalance + earnedAmount,
+            Description = $"ربح من طلب #{order.OrderNumber}",
+        };
+        await txRepo.AddAsync(walletTx);
+
+        // Update driver cash on hand (for COD orders)
+        if (order.PaymentMethod == Core.Enums.PaymentMethod.Cash || order.PaymentMethod == Core.Enums.PaymentMethod.CashOnDelivery)
+        {
+            var driverRepo = _unitOfWork.GetRepository<Driver, Guid>();
+            var driver = await driverRepo.GetByIdAsync(driverId);
+            if (driver != null)
+            {
+                driver.CashOnHand += earnedAmount;
+                driverRepo.Update(driver);
+            }
+        }
+
         await _unitOfWork.SaveChangesAsync();
 
         return Result<OrderDto>.Success(_mapper.Map<OrderDto>(order));
@@ -304,5 +335,15 @@ internal class OrdersByDatePrefixSpec : BaseSpecification<Order>
     public OrdersByDatePrefixSpec(string datePrefix)
     {
         SetCriteria(o => o.OrderNumber.StartsWith($"ORD-{datePrefix}"));
+    }
+}
+
+internal class LatestDriverWalletTxSpec : BaseSpecification<WalletTransaction>
+{
+    public LatestDriverWalletTxSpec(Guid driverId)
+    {
+        SetCriteria(t => t.DriverId == driverId);
+        SetOrderByDescending(t => t.CreatedAt);
+        ApplyPaging(0, 1);
     }
 }
