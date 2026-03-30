@@ -86,7 +86,7 @@ public class AuthService : IAuthService
         await _userManager.AddToRoleAsync(driver, "Driver");
 
         _logger.LogInformation("Driver {DriverId} registered", driver.Id);
-        return Result<AuthResponseDto>.Success(BuildAuthResponse(driver, isNewUser: true));
+        return Result<AuthResponseDto>.Success(await BuildAuthResponseAsync(driver, isNewUser: true));
     }
 
     public async Task<Result<AuthResponseDto>> LoginAsync(LoginDto dto)
@@ -105,7 +105,7 @@ public class AuthService : IAuthService
             return Result<AuthResponseDto>.Unauthorized(ErrorMessages.InvalidCredentials);
 
         _logger.LogInformation("Driver {DriverId} logged in", driver.Id);
-        return Result<AuthResponseDto>.Success(BuildAuthResponse(driver, isNewUser: false));
+        return Result<AuthResponseDto>.Success(await BuildAuthResponseAsync(driver, isNewUser: false));
     }
 
     public async Task<Result<bool>> ForgotPasswordAsync(ForgotPasswordDto dto)
@@ -182,7 +182,7 @@ public class AuthService : IAuthService
         if (driver == null)
             return Result<AuthResponseDto>.NotFound(ErrorMessages.DriverNotFound);
 
-        return Result<AuthResponseDto>.Success(BuildAuthResponse(driver, isNewUser: false));
+        return Result<AuthResponseDto>.Success(await BuildAuthResponseAsync(driver, isNewUser: false));
     }
 
     public Task<Result<bool>> LogoutAsync(Guid driverId, string token)
@@ -201,16 +201,16 @@ public class AuthService : IAuthService
     // Private Helpers
     // ══════════════════════════════════════════════
 
-    private AuthResponseDto BuildAuthResponse(Driver driver, bool isNewUser) => new()
+    private async Task<AuthResponseDto> BuildAuthResponseAsync(Driver driver, bool isNewUser) => new()
     {
-        Token = GenerateJwtToken(driver),
+        Token = await GenerateJwtTokenAsync(driver),
         RefreshToken = GenerateRefreshToken(),
         ExpiresAt = DateTime.UtcNow.AddMinutes(_config.GetValue<int>("JwtSettings:AccessTokenExpiryMinutes")),
         IsNewUser = isNewUser,
         Driver = MapToProfileDto(driver)
     };
 
-    private string GenerateJwtToken(Driver driver)
+    private async Task<string> GenerateJwtTokenAsync(Driver driver)
     {
         var jwtSettings = _config.GetSection("JwtSettings");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!));
@@ -223,6 +223,13 @@ public class AuthService : IAuthService
             new(ClaimTypes.MobilePhone, driver.PhoneNumber ?? ""),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        // Add user roles to JWT claims
+        var roles = await _userManager.GetRolesAsync(driver);
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         var token = new JwtSecurityToken(
             issuer: jwtSettings["Issuer"],
