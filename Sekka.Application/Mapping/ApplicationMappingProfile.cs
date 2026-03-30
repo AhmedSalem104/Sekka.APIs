@@ -87,9 +87,11 @@ public class ApplicationMappingProfile : Profile
         CreateMap<PaymentRequest, Core.DTOs.Wallet.PaymentRequestDto>();
         CreateMap<DailyStats, Core.DTOs.Analytics.DailyStatsDto>();
         CreateMap<OrderDispute, Core.DTOs.Wallet.DisputeDto>();
+        CreateMap<OrderDispute, Core.DTOs.Financial.DisputeDto>();
         CreateMap<Invoice, Core.DTOs.Wallet.InvoiceDto>();
         CreateMap<InvoiceItem, Core.DTOs.Wallet.InvoiceItemDto>();
         CreateMap<RefundRequest, Core.DTOs.Wallet.RefundDto>();
+        CreateMap<RefundRequest, Core.DTOs.Financial.RefundDto>();
         CreateMap<SurgePricingRule, object>(); // placeholder
 
         // ── Phase 5: Communication ──
