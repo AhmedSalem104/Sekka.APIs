@@ -1,11 +1,13 @@
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Sekka.Core.Common;
-using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Common;
 using Sekka.Core.DTOs.Social;
+using Sekka.Core.Enums;
 using Sekka.Core.Interfaces.Persistence;
 using Sekka.Core.Interfaces.Services;
+using Sekka.Core.Specifications;
+using Sekka.Persistence.Entities;
 
 namespace Sekka.Application.Services;
 
@@ -22,51 +24,372 @@ public class SavingsCircleService : ISavingsCircleService
         _logger = logger;
     }
 
-    public Task<Result<CircleDto>> CreateAsync(Guid driverId, CreateCircleDto dto)
+    public async Task<Result<CircleDto>> CreateAsync(Guid driverId, CreateCircleDto dto)
     {
-        _logger.LogWarning("CreateCircle called — feature under development");
-        return Task.FromResult(Result<CircleDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("إنشاء حلقة التوفير")));
+        _logger.LogInformation("CreateCircle by driver {DriverId}", driverId);
+
+        var circleRepo = _unitOfWork.GetRepository<SavingsCircle, Guid>();
+        var memberRepo = _unitOfWork.GetRepository<SavingsCircleMember, Guid>();
+
+        var circle = new SavingsCircle
+        {
+            Id = Guid.NewGuid(),
+            CreatorDriverId = driverId,
+            Name = dto.Name,
+            MonthlyAmount = dto.MonthlyAmount,
+            MaxMembers = dto.MaxMembers,
+            DurationMonths = dto.DurationMonths,
+            CurrentRound = 0,
+            Status = CircleStatus.Forming,
+            MinHealthScore = dto.MinHealthScore
+        };
+
+        await circleRepo.AddAsync(circle);
+
+        // Creator is automatically the first member
+        var member = new SavingsCircleMember
+        {
+            Id = Guid.NewGuid(),
+            CircleId = circle.Id,
+            DriverId = driverId,
+            TurnOrder = 1,
+            Status = CircleMemberStatus.Active,
+            JoinedAt = DateTime.UtcNow
+        };
+        await memberRepo.AddAsync(member);
+
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<CircleDto>.Success(new CircleDto
+        {
+            Id = circle.Id,
+            Name = circle.Name,
+            MonthlyAmount = circle.MonthlyAmount,
+            MaxMembers = circle.MaxMembers,
+            CurrentMembersCount = 1,
+            DurationMonths = circle.DurationMonths,
+            CurrentRound = circle.CurrentRound,
+            Status = circle.Status,
+            MinHealthScore = circle.MinHealthScore,
+            StartDate = circle.StartDate,
+            CreatedAt = circle.CreatedAt
+        });
     }
 
-    public Task<Result<PagedResult<CircleDto>>> GetAvailableAsync(PaginationDto pagination)
+    public async Task<Result<PagedResult<CircleDto>>> GetAvailableAsync(PaginationDto pagination)
     {
-        _logger.LogWarning("GetAvailableCircles called — feature under development");
-        return Task.FromResult(Result<PagedResult<CircleDto>>.BadRequest(ErrorMessages.FeatureUnderDevelopment("حلقات التوفير المتاحة")));
+        _logger.LogInformation("GetAvailableCircles");
+
+        var repo = _unitOfWork.GetRepository<SavingsCircle, Guid>();
+        var spec = new AvailableCirclesSpec();
+        var circles = await repo.ListAsync(spec);
+
+        var memberRepo = _unitOfWork.GetRepository<SavingsCircleMember, Guid>();
+
+        var dtos = new List<CircleDto>();
+        foreach (var c in circles)
+        {
+            var membersSpec = new CircleMembersSpec(c.Id);
+            var members = await memberRepo.ListAsync(membersSpec);
+
+            dtos.Add(new CircleDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                MonthlyAmount = c.MonthlyAmount,
+                MaxMembers = c.MaxMembers,
+                CurrentMembersCount = members.Count,
+                DurationMonths = c.DurationMonths,
+                CurrentRound = c.CurrentRound,
+                Status = c.Status,
+                MinHealthScore = c.MinHealthScore,
+                StartDate = c.StartDate,
+                CreatedAt = c.CreatedAt
+            });
+        }
+
+        var paged = dtos
+            .Skip((pagination.Page - 1) * pagination.PageSize)
+            .Take(pagination.PageSize)
+            .ToList();
+
+        return Result<PagedResult<CircleDto>>.Success(
+            new PagedResult<CircleDto>(paged, dtos.Count, pagination.Page, pagination.PageSize));
     }
 
-    public Task<Result<CircleDetailDto>> GetByIdAsync(Guid circleId)
+    public async Task<Result<CircleDetailDto>> GetByIdAsync(Guid circleId)
     {
-        _logger.LogWarning("GetCircleById called — feature under development");
-        return Task.FromResult(Result<CircleDetailDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("تفاصيل حلقة التوفير")));
+        _logger.LogInformation("GetCircleById {CircleId}", circleId);
+
+        var repo = _unitOfWork.GetRepository<SavingsCircle, Guid>();
+        var circle = await repo.GetByIdAsync(circleId);
+
+        if (circle is null)
+            return Result<CircleDetailDto>.NotFound("حلقة التوفير غير موجودة");
+
+        var memberRepo = _unitOfWork.GetRepository<SavingsCircleMember, Guid>();
+        var membersSpec = new CircleMembersSpec(circleId);
+        var members = await memberRepo.ListAsync(membersSpec);
+
+        var paymentRepo = _unitOfWork.GetRepository<SavingsCirclePayment, Guid>();
+        var paymentsSpec = new CirclePaymentsSpec(circleId);
+        var payments = await paymentRepo.ListAsync(paymentsSpec);
+
+        return Result<CircleDetailDto>.Success(new CircleDetailDto
+        {
+            Id = circle.Id,
+            Name = circle.Name,
+            MonthlyAmount = circle.MonthlyAmount,
+            MaxMembers = circle.MaxMembers,
+            DurationMonths = circle.DurationMonths,
+            CurrentRound = circle.CurrentRound,
+            Status = circle.Status,
+            MinHealthScore = circle.MinHealthScore,
+            StartDate = circle.StartDate,
+            CreatorDriverId = circle.CreatorDriverId,
+            Members = members.Select(m => new CircleMemberDto
+            {
+                Id = m.Id,
+                DriverId = m.DriverId,
+                DriverName = string.Empty,
+                TurnOrder = m.TurnOrder,
+                Status = m.Status,
+                JoinedAt = m.JoinedAt
+            }).ToList(),
+            RecentPayments = payments
+                .OrderByDescending(p => p.PaidAt ?? p.CreatedAt)
+                .Take(10)
+                .Select(p => new CirclePaymentDto
+                {
+                    Id = p.Id,
+                    MemberId = p.MemberId,
+                    MemberName = string.Empty,
+                    RoundNumber = p.RoundNumber,
+                    Amount = p.Amount,
+                    Status = p.Status,
+                    PaidAt = p.PaidAt
+                }).ToList()
+        });
     }
 
-    public Task<Result<List<CircleDto>>> GetMyCirclesAsync(Guid driverId)
+    public async Task<Result<List<CircleDto>>> GetMyCirclesAsync(Guid driverId)
     {
-        _logger.LogWarning("GetMyCircles called — feature under development");
-        return Task.FromResult(Result<List<CircleDto>>.BadRequest(ErrorMessages.FeatureUnderDevelopment("حلقاتي")));
+        _logger.LogInformation("GetMyCircles for driver {DriverId}", driverId);
+
+        var memberRepo = _unitOfWork.GetRepository<SavingsCircleMember, Guid>();
+        var myMembershipsSpec = new DriverCircleMembershipsSpec(driverId);
+        var memberships = await memberRepo.ListAsync(myMembershipsSpec);
+
+        var circleRepo = _unitOfWork.GetRepository<SavingsCircle, Guid>();
+        var dtos = new List<CircleDto>();
+
+        foreach (var membership in memberships)
+        {
+            var circle = await circleRepo.GetByIdAsync(membership.CircleId);
+            if (circle is null) continue;
+
+            var membersSpec = new CircleMembersSpec(circle.Id);
+            var members = await memberRepo.ListAsync(membersSpec);
+
+            dtos.Add(new CircleDto
+            {
+                Id = circle.Id,
+                Name = circle.Name,
+                MonthlyAmount = circle.MonthlyAmount,
+                MaxMembers = circle.MaxMembers,
+                CurrentMembersCount = members.Count,
+                DurationMonths = circle.DurationMonths,
+                CurrentRound = circle.CurrentRound,
+                Status = circle.Status,
+                MinHealthScore = circle.MinHealthScore,
+                StartDate = circle.StartDate,
+                CreatedAt = circle.CreatedAt
+            });
+        }
+
+        return Result<List<CircleDto>>.Success(dtos);
     }
 
-    public Task<Result<bool>> JoinAsync(Guid driverId, Guid circleId)
+    public async Task<Result<bool>> JoinAsync(Guid driverId, Guid circleId)
     {
-        _logger.LogWarning("JoinCircle called — feature under development");
-        return Task.FromResult(Result<bool>.BadRequest(ErrorMessages.FeatureUnderDevelopment("الانضمام لحلقة التوفير")));
+        _logger.LogInformation("JoinCircle {CircleId} by driver {DriverId}", circleId, driverId);
+
+        var circleRepo = _unitOfWork.GetRepository<SavingsCircle, Guid>();
+        var circle = await circleRepo.GetByIdAsync(circleId);
+
+        if (circle is null)
+            return Result<bool>.NotFound("حلقة التوفير غير موجودة");
+
+        if (circle.Status != CircleStatus.Forming)
+            return Result<bool>.BadRequest("لا يمكن الانضمام - الحلقة ليست في مرحلة التكوين");
+
+        var memberRepo = _unitOfWork.GetRepository<SavingsCircleMember, Guid>();
+        var membersSpec = new CircleMembersSpec(circleId);
+        var members = await memberRepo.ListAsync(membersSpec);
+
+        if (members.Any(m => m.DriverId == driverId && m.Status == CircleMemberStatus.Active))
+            return Result<bool>.Conflict("أنت عضو بالفعل في هذه الحلقة");
+
+        if (members.Count(m => m.Status == CircleMemberStatus.Active) >= circle.MaxMembers)
+            return Result<bool>.BadRequest("الحلقة ممتلئة");
+
+        var member = new SavingsCircleMember
+        {
+            Id = Guid.NewGuid(),
+            CircleId = circleId,
+            DriverId = driverId,
+            TurnOrder = members.Count + 1,
+            Status = CircleMemberStatus.Active,
+            JoinedAt = DateTime.UtcNow
+        };
+
+        await memberRepo.AddAsync(member);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<bool>.Success(true);
     }
 
-    public Task<Result<bool>> LeaveAsync(Guid driverId, Guid circleId)
+    public async Task<Result<bool>> LeaveAsync(Guid driverId, Guid circleId)
     {
-        _logger.LogWarning("LeaveCircle called — feature under development");
-        return Task.FromResult(Result<bool>.BadRequest(ErrorMessages.FeatureUnderDevelopment("مغادرة حلقة التوفير")));
+        _logger.LogInformation("LeaveCircle {CircleId} by driver {DriverId}", circleId, driverId);
+
+        var circleRepo = _unitOfWork.GetRepository<SavingsCircle, Guid>();
+        var circle = await circleRepo.GetByIdAsync(circleId);
+
+        if (circle is null)
+            return Result<bool>.NotFound("حلقة التوفير غير موجودة");
+
+        if (circle.Status != CircleStatus.Forming)
+            return Result<bool>.BadRequest("لا يمكن المغادرة بعد بدء الحلقة");
+
+        var memberRepo = _unitOfWork.GetRepository<SavingsCircleMember, Guid>();
+        var spec = new CircleMemberByDriverSpec(circleId, driverId);
+        var members = await memberRepo.ListAsync(spec);
+        var member = members.FirstOrDefault();
+
+        if (member is null)
+            return Result<bool>.NotFound("أنت لست عضوًا في هذه الحلقة");
+
+        member.Status = CircleMemberStatus.Left;
+        memberRepo.Update(member);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<bool>.Success(true);
     }
 
-    public Task<Result<CirclePaymentDto>> MakePaymentAsync(Guid driverId, Guid circleId)
+    public async Task<Result<CirclePaymentDto>> MakePaymentAsync(Guid driverId, Guid circleId)
     {
-        _logger.LogWarning("MakeCirclePayment called — feature under development");
-        return Task.FromResult(Result<CirclePaymentDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("دفع قسط حلقة التوفير")));
+        _logger.LogInformation("MakeCirclePayment for circle {CircleId} by driver {DriverId}", circleId, driverId);
+
+        var circleRepo = _unitOfWork.GetRepository<SavingsCircle, Guid>();
+        var circle = await circleRepo.GetByIdAsync(circleId);
+
+        if (circle is null)
+            return Result<CirclePaymentDto>.NotFound("حلقة التوفير غير موجودة");
+
+        if (circle.Status != CircleStatus.Active)
+            return Result<CirclePaymentDto>.BadRequest("الحلقة غير نشطة");
+
+        var memberRepo = _unitOfWork.GetRepository<SavingsCircleMember, Guid>();
+        var memberSpec = new CircleMemberByDriverSpec(circleId, driverId);
+        var members = await memberRepo.ListAsync(memberSpec);
+        var member = members.FirstOrDefault(m => m.Status == CircleMemberStatus.Active);
+
+        if (member is null)
+            return Result<CirclePaymentDto>.NotFound("أنت لست عضوًا نشطًا في هذه الحلقة");
+
+        var paymentRepo = _unitOfWork.GetRepository<SavingsCirclePayment, Guid>();
+
+        var payment = new SavingsCirclePayment
+        {
+            Id = Guid.NewGuid(),
+            CircleId = circleId,
+            MemberId = member.Id,
+            RoundNumber = circle.CurrentRound,
+            Amount = circle.MonthlyAmount,
+            Status = CirclePaymentStatus.Paid,
+            PaidAt = DateTime.UtcNow
+        };
+
+        await paymentRepo.AddAsync(payment);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<CirclePaymentDto>.Success(new CirclePaymentDto
+        {
+            Id = payment.Id,
+            MemberId = payment.MemberId,
+            MemberName = string.Empty,
+            RoundNumber = payment.RoundNumber,
+            Amount = payment.Amount,
+            Status = payment.Status,
+            PaidAt = payment.PaidAt
+        });
     }
 
-    public Task<Result<List<CirclePaymentDto>>> GetPaymentsAsync(Guid circleId)
+    public async Task<Result<List<CirclePaymentDto>>> GetPaymentsAsync(Guid circleId)
     {
-        _logger.LogWarning("GetCirclePayments called — feature under development");
-        return Task.FromResult(Result<List<CirclePaymentDto>>.BadRequest(ErrorMessages.FeatureUnderDevelopment("مدفوعات حلقة التوفير")));
+        _logger.LogInformation("GetCirclePayments for circle {CircleId}", circleId);
+
+        var paymentRepo = _unitOfWork.GetRepository<SavingsCirclePayment, Guid>();
+        var spec = new CirclePaymentsSpec(circleId);
+        var payments = await paymentRepo.ListAsync(spec);
+
+        var dtos = payments
+            .OrderByDescending(p => p.PaidAt ?? p.CreatedAt)
+            .Select(p => new CirclePaymentDto
+            {
+                Id = p.Id,
+                MemberId = p.MemberId,
+                MemberName = string.Empty,
+                RoundNumber = p.RoundNumber,
+                Amount = p.Amount,
+                Status = p.Status,
+                PaidAt = p.PaidAt
+            }).ToList();
+
+        return Result<List<CirclePaymentDto>>.Success(dtos);
+    }
+}
+
+internal class AvailableCirclesSpec : BaseSpecification<SavingsCircle>
+{
+    public AvailableCirclesSpec()
+    {
+        SetCriteria(c => c.Status == CircleStatus.Forming);
+        SetOrderByDescending(c => c.CreatedAt);
+    }
+}
+
+internal class CircleMembersSpec : BaseSpecification<SavingsCircleMember>
+{
+    public CircleMembersSpec(Guid circleId)
+    {
+        SetCriteria(m => m.CircleId == circleId && m.Status == CircleMemberStatus.Active);
+        SetOrderBy(m => m.TurnOrder);
+    }
+}
+
+internal class CirclePaymentsSpec : BaseSpecification<SavingsCirclePayment>
+{
+    public CirclePaymentsSpec(Guid circleId)
+    {
+        SetCriteria(p => p.CircleId == circleId);
+        SetOrderByDescending(p => p.CreatedAt);
+    }
+}
+
+internal class DriverCircleMembershipsSpec : BaseSpecification<SavingsCircleMember>
+{
+    public DriverCircleMembershipsSpec(Guid driverId)
+    {
+        SetCriteria(m => m.DriverId == driverId && m.Status == CircleMemberStatus.Active);
+    }
+}
+
+internal class CircleMemberByDriverSpec : BaseSpecification<SavingsCircleMember>
+{
+    public CircleMemberByDriverSpec(Guid circleId, Guid driverId)
+    {
+        SetCriteria(m => m.CircleId == circleId && m.DriverId == driverId);
     }
 }

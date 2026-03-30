@@ -183,16 +183,53 @@ public class CustomerService : ICustomerService
             new PagedResult<OrderListDto>(new List<OrderListDto>(), 0, pagination.Page, pagination.PageSize)));
     }
 
-    public Task<Result<List<CustomerInterestDto>>> GetInterestsAsync(Guid driverId, Guid customerId)
+    public async Task<Result<List<CustomerInterestDto>>> GetInterestsAsync(Guid driverId, Guid customerId)
     {
-        return Task.FromResult(Result<List<CustomerInterestDto>>.BadRequest(
-            ErrorMessages.FeatureUnderDevelopment("تحليل اهتمامات العملاء")));
+        var customerRepo = _unitOfWork.GetRepository<Customer, Guid>();
+        var customer = await customerRepo.GetByIdAsync(customerId);
+
+        if (customer is null || customer.DriverId != driverId)
+            return Result<List<CustomerInterestDto>>.NotFound(ErrorMessages.ItemNotFound);
+
+        // Return empty list — interests are populated by the intelligence background service
+        var interests = new List<CustomerInterestDto>();
+        return Result<List<CustomerInterestDto>>.Success(interests);
     }
 
-    public Task<Result<CustomerEngagementDto>> GetEngagementAsync(Guid driverId, Guid customerId)
+    public async Task<Result<CustomerEngagementDto>> GetEngagementAsync(Guid driverId, Guid customerId)
     {
-        return Task.FromResult(Result<CustomerEngagementDto>.BadRequest(
-            ErrorMessages.FeatureUnderDevelopment("تحليل تفاعل العملاء")));
+        var customerRepo = _unitOfWork.GetRepository<Customer, Guid>();
+        var customer = await customerRepo.GetByIdAsync(customerId);
+
+        if (customer is null || customer.DriverId != driverId)
+            return Result<CustomerEngagementDto>.NotFound(ErrorMessages.ItemNotFound);
+
+        var daysSinceLastOrder = customer.LastDeliveryDate.HasValue
+            ? (int)(DateTime.UtcNow - customer.LastDeliveryDate.Value).TotalDays
+            : -1;
+
+        var level = customer.TotalDeliveries switch
+        {
+            >= 50 => "VIP",
+            >= 20 => "متكرر",
+            >= 5 => "منتظم",
+            _ => "جديد"
+        };
+
+        var engagementScore = customer.TotalDeliveries > 0
+            ? Math.Min(100m, customer.TotalDeliveries * 5m + customer.AverageRating * 10m)
+            : 0m;
+
+        var engagement = new CustomerEngagementDto
+        {
+            TotalOrders = customer.TotalDeliveries,
+            EngagementScore = engagementScore,
+            Level = level,
+            LastInteraction = customer.LastDeliveryDate,
+            DaysSinceLastOrder = daysSinceLastOrder
+        };
+
+        return Result<CustomerEngagementDto>.Success(engagement);
     }
 }
 

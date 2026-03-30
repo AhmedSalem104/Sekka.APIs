@@ -110,14 +110,50 @@ public class CallerIdService : ICallerIdService
         return Result<bool>.Success(true);
     }
 
-    public Task<Result<TruecallerLookupDto>> TruecallerLookupAsync(string phone)
+    public async Task<Result<TruecallerLookupDto>> TruecallerLookupAsync(string phone)
     {
-        return Task.FromResult(Result<TruecallerLookupDto>.BadRequest(
-            ErrorMessages.FeatureUnderDevelopment("Truecaller lookup")));
+        var normalizedPhone = EgyptianPhoneHelper.Normalize(phone);
+
+        // Internal lookup: check if this phone exists in our customer database (across all drivers)
+        // This provides a basic "caller ID" without relying on external APIs
+        var customerRepo = _unitOfWork.GetRepository<Customer, Guid>();
+        var spec = new CustomerByPhoneGlobalSpec(normalizedPhone);
+        var customers = await customerRepo.ListAsync(spec);
+
+        var totalOrders = customers.Sum(c => c.TotalDeliveries);
+        var avgRating = customers.Count > 0 ? (double)customers.Average(c => c.AverageRating) : 0;
+        var isBlocked = customers.Any(c => c.IsBlocked);
+
+        var riskLevel = isBlocked ? "High"
+            : totalOrders == 0 ? "Medium"
+            : avgRating >= 3.5 ? "Low"
+            : "Medium";
+
+        var result = new TruecallerLookupDto
+        {
+            Phone = normalizedPhone,
+            Name = customers.FirstOrDefault(c => c.Name != null)?.Name,
+            SpamScore = isBlocked ? 80 : 0,
+            IsVerified = totalOrders >= 3,
+            InternalCustomer = customers.Count > 0,
+            InternalRating = avgRating > 0 ? avgRating : null,
+            InternalOrdersCount = totalOrders,
+            RiskLevel = riskLevel
+        };
+
+        return Result<TruecallerLookupDto>.Success(result);
     }
 }
 
 // ── Specifications ──
+
+internal class CustomerByPhoneGlobalSpec : BaseSpecification<Customer>
+{
+    public CustomerByPhoneGlobalSpec(string phone)
+    {
+        SetCriteria(c => c.Phone == phone);
+    }
+}
 
 internal class CallerIdByPhoneSpec : BaseSpecification<CallerIdNote>
 {

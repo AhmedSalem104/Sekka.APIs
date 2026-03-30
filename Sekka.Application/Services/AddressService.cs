@@ -95,20 +95,70 @@ public class AddressService : IAddressService
         return Result<bool>.Success(true);
     }
 
-    public Task<Result<List<AddressDto>>> AutocompleteAsync(Guid driverId, string q, double? latitude, double? longitude)
+    public async Task<Result<List<AddressDto>>> AutocompleteAsync(Guid driverId, string q, double? latitude, double? longitude)
     {
-        return Task.FromResult(Result<List<AddressDto>>.BadRequest(
-            ErrorMessages.FeatureUnderDevelopment("الإكمال التلقائي للعناوين")));
+        if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
+            return Result<List<AddressDto>>.Success(new List<AddressDto>());
+
+        var repo = _unitOfWork.GetRepository<Address, Guid>();
+        var spec = new AddressAutocompleteSpec(driverId, q);
+        var addresses = await repo.ListAsync(spec);
+
+        return Result<List<AddressDto>>.Success(_mapper.Map<List<AddressDto>>(addresses));
     }
 
-    public Task<Result<List<AddressDto>>> NearbyAsync(Guid driverId, double latitude, double longitude, double radiusKm)
+    public async Task<Result<List<AddressDto>>> NearbyAsync(Guid driverId, double latitude, double longitude, double radiusKm)
     {
-        return Task.FromResult(Result<List<AddressDto>>.BadRequest(
-            ErrorMessages.FeatureUnderDevelopment("العناوين القريبة")));
+        // Fetch all driver addresses and filter in-memory using Haversine
+        // (for DB-level spatial queries, PostGIS or similar would be needed)
+        var repo = _unitOfWork.GetRepository<Address, Guid>();
+        var spec = new AddressesWithCoordinatesSpec(driverId);
+        var allAddresses = await repo.ListAsync(spec);
+
+        var nearby = allAddresses
+            .Where(a => a.Latitude.HasValue && a.Longitude.HasValue)
+            .Select(a => new { Address = a, Distance = HaversineDistance(latitude, longitude, a.Latitude!.Value, a.Longitude!.Value) })
+            .Where(x => x.Distance <= radiusKm)
+            .OrderBy(x => x.Distance)
+            .Take(20)
+            .Select(x => x.Address)
+            .ToList();
+
+        return Result<List<AddressDto>>.Success(_mapper.Map<List<AddressDto>>(nearby));
+    }
+
+    private static double HaversineDistance(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 6371.0;
+        var dLat = (lat2 - lat1) * Math.PI / 180.0;
+        var dLon = (lon2 - lon1) * Math.PI / 180.0;
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
+            + Math.Cos(lat1 * Math.PI / 180.0) * Math.Cos(lat2 * Math.PI / 180.0)
+            * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
     }
 }
 
 // ── Specifications ──
+
+internal class AddressAutocompleteSpec : BaseSpecification<Address>
+{
+    public AddressAutocompleteSpec(Guid driverId, string query)
+    {
+        var q = query.ToLowerInvariant();
+        SetCriteria(a => a.DriverId == driverId && a.AddressText.ToLower().Contains(q));
+        SetOrderByDescending(a => a.VisitCount);
+        ApplyPaging(0, 10);
+    }
+}
+
+internal class AddressesWithCoordinatesSpec : BaseSpecification<Address>
+{
+    public AddressesWithCoordinatesSpec(Guid driverId)
+    {
+        SetCriteria(a => a.DriverId == driverId && a.Latitude != null && a.Longitude != null);
+    }
+}
 
 internal class AddressSearchSpec : BaseSpecification<Address>
 {
