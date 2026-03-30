@@ -23,6 +23,8 @@ public class OrderController : ControllerBase
     private readonly IOrderWorthService _worthService;
     private readonly IAddressSwapService _addressSwapService;
     private readonly IWaitingTimerService _waitingTimerService;
+    private readonly IDisputeService _disputeService;
+    private readonly IRefundService _refundService;
 
     public OrderController(
         IOrderService orderService,
@@ -32,7 +34,9 @@ public class OrderController : ControllerBase
         IDuplicateDetectionService duplicateService,
         IOrderWorthService worthService,
         IAddressSwapService addressSwapService,
-        IWaitingTimerService waitingTimerService)
+        IWaitingTimerService waitingTimerService,
+        IDisputeService disputeService,
+        IRefundService refundService)
     {
         _orderService = orderService;
         _cancellationService = cancellationService;
@@ -42,6 +46,8 @@ public class OrderController : ControllerBase
         _worthService = worthService;
         _addressSwapService = addressSwapService;
         _waitingTimerService = waitingTimerService;
+        _disputeService = disputeService;
+        _refundService = refundService;
     }
 
     private Guid GetDriverId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -126,28 +132,60 @@ public class OrderController : ControllerBase
         => ToActionResult(await _worthService.CalculatePriceAsync(dto));
 
     [HttpPost("{id:guid}/disclaimer")]
-    public IActionResult CreateDisclaimer(Guid id, [FromBody] CreateDisclaimerDto dto)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إخلاء المسؤولية")));
+    public async Task<IActionResult> CreateDisclaimer(Guid id, [FromBody] CreateDisclaimerDto dto)
+    {
+        // Store disclaimer as order note
+        var result = await _orderService.UpdateAsync(GetDriverId(), id, new UpdateOrderDto
+        {
+            Notes = $"[إخلاء مسؤولية] {dto.ItemsDescription} | الحالة: {dto.Condition} | {(dto.CustomerAcknowledged ? "العميل موافق" : "العميل لم يوافق")}{(dto.Notes != null ? " | " + dto.Notes : "")}"
+        });
+        if (!result.IsSuccess)
+            return ToActionResult(result);
+        return ToActionResult(Result<DisclaimerDto>.Success(new DisclaimerDto
+        {
+            Id = Guid.NewGuid(),
+            OrderId = id,
+            ItemsDescription = dto.ItemsDescription,
+            Condition = dto.Condition,
+            CustomerAcknowledged = dto.CustomerAcknowledged,
+            Notes = dto.Notes,
+            CreatedAt = DateTime.UtcNow
+        }), StatusCodes.Status201Created);
+    }
 
     [HttpGet("{id:guid}/disclaimer")]
-    public IActionResult GetDisclaimer(Guid id)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("إخلاء المسؤولية")));
+    public async Task<IActionResult> GetDisclaimer(Guid id)
+    {
+        var order = await _orderService.GetByIdAsync(GetDriverId(), id);
+        if (!order.IsSuccess)
+            return ToActionResult(order);
+        var notes = order.Value?.Notes;
+        if (string.IsNullOrEmpty(notes) || !notes.Contains("[إخلاء مسؤولية]"))
+            return NotFound(ApiResponse<object>.Fail("لا يوجد إخلاء مسؤولية لهذا الطلب"));
+        return Ok(ApiResponse<object>.Success(new { orderNotes = notes }));
+    }
 
     [HttpPost("{id:guid}/dispute")]
-    public IActionResult CreateDispute(Guid id)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("النزاعات")));
+    public async Task<IActionResult> CreateDispute(Guid id, [FromBody] Core.DTOs.Financial.CreateDisputeDto dto)
+    {
+        dto.OrderId = id;
+        return ToActionResult(await _disputeService.CreateAsync(GetDriverId(), dto));
+    }
 
     [HttpGet("{id:guid}/disputes")]
-    public IActionResult GetDisputes(Guid id)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("النزاعات")));
+    public async Task<IActionResult> GetDisputes(Guid id)
+        => ToActionResult(await _disputeService.GetDisputesAsync(id));
 
     [HttpPost("{id:guid}/refund")]
-    public IActionResult CreateRefund(Guid id)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("الاسترداد")));
+    public async Task<IActionResult> CreateRefund(Guid id, [FromBody] Core.DTOs.Financial.CreateRefundDto dto)
+    {
+        dto.OrderId = id;
+        return ToActionResult(await _refundService.CreateAsync(GetDriverId(), dto));
+    }
 
     [HttpGet("{id:guid}/refunds")]
-    public IActionResult GetRefunds(Guid id)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("الاسترداد")));
+    public async Task<IActionResult> GetRefunds(Guid id)
+        => ToActionResult(await _refundService.GetRefundsAsync(id));
 
     [HttpGet("time-slots")]
     public async Task<IActionResult> GetTimeSlots([FromQuery] DateOnly date, [FromQuery] Guid? regionId)
