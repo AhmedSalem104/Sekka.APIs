@@ -166,8 +166,9 @@ public class OrderController : ControllerBase
     }
 
     [HttpPost("{id:guid}/dispute")]
-    public async Task<IActionResult> CreateDispute(Guid id, [FromBody] Core.DTOs.Financial.CreateDisputeDto dto)
+    public async Task<IActionResult> CreateDispute(Guid id, [FromBody] Core.DTOs.Financial.CreateDisputeDto? dto = null)
     {
+        dto ??= new Core.DTOs.Financial.CreateDisputeDto { Description = "نزاع على الطلب" };
         dto.OrderId = id;
         return ToActionResult(await _disputeService.CreateAsync(GetDriverId(), dto));
     }
@@ -177,8 +178,9 @@ public class OrderController : ControllerBase
         => ToActionResult(await _disputeService.GetDisputesAsync(id));
 
     [HttpPost("{id:guid}/refund")]
-    public async Task<IActionResult> CreateRefund(Guid id, [FromBody] Core.DTOs.Financial.CreateRefundDto dto)
+    public async Task<IActionResult> CreateRefund(Guid id, [FromBody] Core.DTOs.Financial.CreateRefundDto? dto = null)
     {
+        dto ??= new Core.DTOs.Financial.CreateRefundDto();
         dto.OrderId = id;
         return ToActionResult(await _refundService.CreateAsync(GetDriverId(), dto));
     }
