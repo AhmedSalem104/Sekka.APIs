@@ -278,7 +278,7 @@ public class AuthService : IAuthService
         Email = driver.Email,
         ProfileImageUrl = driver.ProfileImageUrl,
         LicenseImageUrl = driver.LicenseImageUrl,
-        VehicleType = driver.VehicleType,
+        VehicleType = driver.VehicleType ?? Sekka.Core.Enums.VehicleType.Motorcycle,
         IsOnline = driver.IsOnline,
         CashOnHand = driver.CashOnHand,
         TotalPoints = driver.TotalPoints,

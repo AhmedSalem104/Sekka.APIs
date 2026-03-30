@@ -30,7 +30,7 @@ public class BadgeService : IBadgeService
             DriverName = driver.Name,
             ProfileImageUrl = driver.ProfileImageUrl,
             DriverId = driver.Id,
-            VehicleType = driver.VehicleType,
+            VehicleType = driver.VehicleType ?? Sekka.Core.Enums.VehicleType.Motorcycle,
             AverageRating = 0,
             TotalDeliveries = 0,
             MemberSince = driver.CreatedAt,
@@ -55,7 +55,7 @@ public class BadgeService : IBadgeService
             {
                 IsValid = true,
                 DriverName = driver.Name,
-                VehicleType = driver.VehicleType,
+                VehicleType = driver.VehicleType ?? Sekka.Core.Enums.VehicleType.Motorcycle,
                 Rating = 0,
                 IsActive = driver.IsActive,
                 VerifiedAt = DateTime.UtcNow

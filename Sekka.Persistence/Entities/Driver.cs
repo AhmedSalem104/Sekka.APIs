@@ -7,7 +7,7 @@ public class Driver : IdentityUser<Guid>
 {
     public string Name { get; set; } = null!;
     public string? ProfileImageUrl { get; set; }
-    public VehicleType VehicleType { get; set; }
+    public VehicleType? VehicleType { get; set; }
     public Guid? DefaultRegionId { get; set; }
     public Guid? SubscriptionPlanId { get; set; }
     public bool IsActive { get; set; } = true;

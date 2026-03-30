@@ -146,7 +146,7 @@ public class ProfileService : IProfileService
         totalWeight += 20;
 
         // Vehicle Type (required, 20%)
-        if (driver.VehicleType != 0)
+        if (driver.VehicleType.HasValue)
         { completed.Add(SM.StepVehicleType); completedWeight += 20; }
         else
             pending.Add(new ProfileStepDto { StepName = SM.StepVehicleType, StepKey = "vehicle_type", IsRequired = true, Weight = 20 });
@@ -319,7 +319,7 @@ public class ProfileService : IProfileService
         Email = driver.Email,
         ProfileImageUrl = driver.ProfileImageUrl,
         LicenseImageUrl = driver.LicenseImageUrl,
-        VehicleType = driver.VehicleType,
+        VehicleType = driver.VehicleType ?? Sekka.Core.Enums.VehicleType.Motorcycle,
         IsOnline = driver.IsOnline,
         CashOnHand = driver.CashOnHand,
         TotalPoints = driver.TotalPoints,
