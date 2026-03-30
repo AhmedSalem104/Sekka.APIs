@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Sekka.Core.Common;
 using Sekka.Core.Common.Messages;
@@ -15,13 +16,15 @@ public class AccountManagementService : IAccountManagementService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ISmsService _smsService;
+    private readonly UserManager<Driver> _userManager;
     private readonly ILogger<AccountManagementService> _logger;
 
-    public AccountManagementService(IUnitOfWork unitOfWork, IMapper mapper, ISmsService smsService, ILogger<AccountManagementService> logger)
+    public AccountManagementService(IUnitOfWork unitOfWork, IMapper mapper, ISmsService smsService, UserManager<Driver> userManager, ILogger<AccountManagementService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _smsService = smsService;
+        _userManager = userManager;
         _logger = logger;
     }
 
@@ -59,12 +62,45 @@ public class AccountManagementService : IAccountManagementService
         if (request.ConfirmationCode != dto.ConfirmationCode)
             return Result<bool>.BadRequest(ErrorMessages.InvalidConfirmationCode);
 
+        // Mark deletion request as confirmed
         request.Status = DeletionRequestStatus.Confirmed;
         request.ConfirmedAt = DateTime.UtcNow;
         repo.Update(request);
+
+        // Soft-delete: Deactivate the driver account
+        var driver = await _userManager.FindByIdAsync(driverId.ToString());
+        if (driver != null)
+        {
+            // 1. Deactivate account
+            driver.IsActive = false;
+            driver.IsOnline = false;
+
+            // 2. Anonymize phone to free up the number for re-registration
+            var deletedSuffix = $"_DELETED_{DateTime.UtcNow:yyyyMMddHHmmss}";
+            driver.UserName = driver.PhoneNumber + deletedSuffix;
+            driver.NormalizedUserName = (driver.PhoneNumber + deletedSuffix).ToUpper();
+            driver.PhoneNumber = driver.PhoneNumber + deletedSuffix;
+            driver.PhoneNumberConfirmed = false;
+
+            // 3. Lock account to prevent login
+            driver.LockoutEnabled = true;
+            driver.LockoutEnd = DateTimeOffset.MaxValue;
+
+            // 4. Keep all data intact (orders, wallet, settlements, etc.)
+            driver.UpdatedAt = DateTime.UtcNow;
+
+            await _userManager.UpdateAsync(driver);
+
+            // 5. Revoke all sessions
+            var sessionRepo = _unitOfWork.GetRepository<ActiveSession, Guid>();
+            var sessions = await sessionRepo.ListAsync(new ActiveSessionsByDriverSpec(driverId));
+            foreach (var session in sessions)
+                sessionRepo.Delete(session);
+        }
+
         await _unitOfWork.SaveChangesAsync();
 
-        _logger.LogInformation("Account deletion confirmed for driver {DriverId}", driverId);
+        _logger.LogInformation("Account soft-deleted for driver {DriverId}. Phone freed for re-registration.", driverId);
         return Result<bool>.Success(true);
     }
 
