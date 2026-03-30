@@ -1,9 +1,11 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Sekka.Core.Common;
-using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Social;
+using Sekka.Persistence;
+using System.Security.Claims;
 
 namespace Sekka.API.Controllers.Driver;
 
@@ -13,25 +15,92 @@ namespace Sekka.API.Controllers.Driver;
 [Authorize]
 public class SearchController : ControllerBase
 {
-    [HttpGet]
-    public Task<IActionResult> OmniSearch([FromQuery] string query)
+    private readonly SekkaDbContext _db;
+
+    public SearchController(SekkaDbContext db)
     {
-        // Stubbed — feature under development
-        var result = Result<OmniSearchResultDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("البحث الشامل"));
-        return Task.FromResult(ToActionResult(result));
+        _db = db;
     }
 
-    private IActionResult ToActionResult<T>(Result<T> result, int successCode = 200, string? message = null)
-    {
-        if (result.IsSuccess)
-            return StatusCode(successCode, ApiResponse<T>.Success(result.Value!, message));
+    private Guid GetDriverId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        return result.Error!.Code switch
+    /// <summary>
+    /// Omni-search: searches orders, customers, and partners by query text
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> OmniSearch([FromQuery] string? q, [FromQuery] int limit = 10)
+    {
+        var driverId = GetDriverId();
+        var query = q?.Trim() ?? "";
+
+        if (string.IsNullOrEmpty(query) || query.Length < 2)
+            return Ok(ApiResponse<OmniSearchResultDto>.Success(new OmniSearchResultDto()));
+
+        // Search Orders (by order number, customer name/phone, delivery address)
+        var orders = await _db.Orders
+            .Where(o => o.DriverId == driverId && !o.IsDeleted &&
+                (o.OrderNumber.Contains(query) ||
+                 (o.CustomerName != null && o.CustomerName.Contains(query)) ||
+                 (o.CustomerPhone != null && o.CustomerPhone.Contains(query)) ||
+                 o.DeliveryAddress.Contains(query)))
+            .OrderByDescending(o => o.CreatedAt)
+            .Take(limit)
+            .Select(o => new
+            {
+                o.Id,
+                o.OrderNumber,
+                o.CustomerName,
+                o.CustomerPhone,
+                o.DeliveryAddress,
+                o.Amount,
+                o.Status,
+                o.CreatedAt
+            })
+            .ToListAsync();
+
+        // Search Customers (by name, phone)
+        var customers = await _db.Customers
+            .Where(c => c.DriverId == driverId &&
+                ((c.Name != null && c.Name.Contains(query)) ||
+                 c.Phone.Contains(query)))
+            .OrderByDescending(c => c.TotalDeliveries)
+            .Take(limit)
+            .Select(c => new
+            {
+                c.Id,
+                c.Name,
+                c.Phone,
+                c.TotalDeliveries,
+                c.CreatedAt
+            })
+            .ToListAsync();
+
+        // Search Partners (by name, phone, address)
+        var partners = await _db.Partners
+            .Where(p => p.DriverId == driverId &&
+                (p.Name.Contains(query) ||
+                 (p.Phone != null && p.Phone.Contains(query)) ||
+                 (p.Address != null && p.Address.Contains(query))))
+            .Take(limit)
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Phone,
+                p.Address,
+                p.PartnerType,
+                p.IsActive
+            })
+            .ToListAsync();
+
+        var result = new OmniSearchResultDto
         {
-            "NOT_FOUND" => NotFound(ApiResponse<T>.Fail(result.Error.Message)),
-            "UNAUTHORIZED" => Unauthorized(ApiResponse<T>.Fail(result.Error.Message)),
-            "CONFLICT" => Conflict(ApiResponse<T>.Fail(result.Error.Message)),
-            _ => BadRequest(ApiResponse<T>.Fail(result.Error.Message))
+            Orders = orders.Cast<object>().ToList(),
+            Customers = customers.Cast<object>().ToList(),
+            Partners = partners.Cast<object>().ToList(),
+            TotalResults = orders.Count + customers.Count + partners.Count
         };
+
+        return Ok(ApiResponse<OmniSearchResultDto>.Success(result));
     }
 }
