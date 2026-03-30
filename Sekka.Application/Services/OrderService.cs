@@ -100,12 +100,19 @@ public class OrderService : IOrderService
     public async Task<Result<OrderDetailDto>> GetByIdAsync(Guid driverId, Guid orderId)
     {
         var repo = _unitOfWork.GetRepository<Order, Guid>();
-        var order = await repo.GetByIdAsync(orderId);
+        var spec = new OrderWithDetailsSpec(orderId, driverId);
+        var order = (await repo.ListAsync(spec)).FirstOrDefault();
 
-        if (order == null || order.DriverId != driverId)
+        if (order == null)
             return Result<OrderDetailDto>.NotFound(ErrorMessages.OrderNotFound);
 
-        return Result<OrderDetailDto>.Success(_mapper.Map<OrderDetailDto>(order));
+        var dto = _mapper.Map<OrderDetailDto>(order);
+        dto.Photos = _mapper.Map<List<OrderPhotoDto>>(order.Photos);
+        dto.DeliveryAttempts = _mapper.Map<List<DeliveryAttemptDto>>(order.DeliveryAttempts);
+        dto.AddressSwapLogs = _mapper.Map<List<AddressSwapLogDto>>(order.AddressSwapLogs);
+        dto.WaitingTimers = _mapper.Map<List<WaitingTimerDto>>(order.WaitingTimers);
+
+        return Result<OrderDetailDto>.Success(dto);
     }
 
     public async Task<Result<OrderDto>> UpdateAsync(Guid driverId, Guid orderId, UpdateOrderDto dto)
@@ -392,5 +399,17 @@ internal class CustomerByDriverPhoneSpec : BaseSpecification<Customer>
     public CustomerByDriverPhoneSpec(Guid driverId, string phone)
     {
         SetCriteria(c => c.DriverId == driverId && c.Phone == phone);
+    }
+}
+
+internal class OrderWithDetailsSpec : BaseSpecification<Order>
+{
+    public OrderWithDetailsSpec(Guid orderId, Guid driverId)
+    {
+        SetCriteria(o => o.Id == orderId && o.DriverId == driverId);
+        AddInclude(o => o.Photos);
+        AddInclude(o => o.DeliveryAttempts);
+        AddInclude(o => o.AddressSwapLogs);
+        AddInclude(o => o.WaitingTimers);
     }
 }
