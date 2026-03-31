@@ -6,5 +6,6 @@ public enum PhotoType
     Delivery = 1,
     Signature = 2,
     Damage = 3,
-    Receipt = 4
+    Receipt = 4,
+    Invoice = 5
 }
