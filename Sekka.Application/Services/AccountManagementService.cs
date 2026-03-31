@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Sekka.Core.Common;
 using Sekka.Core.Common.Messages;
@@ -17,21 +18,28 @@ public class AccountManagementService : IAccountManagementService
     private readonly IMapper _mapper;
     private readonly ISmsService _smsService;
     private readonly UserManager<Driver> _userManager;
+    private readonly IConfiguration _config;
     private readonly ILogger<AccountManagementService> _logger;
 
-    public AccountManagementService(IUnitOfWork unitOfWork, IMapper mapper, ISmsService smsService, UserManager<Driver> userManager, ILogger<AccountManagementService> logger)
+    public AccountManagementService(IUnitOfWork unitOfWork, IMapper mapper, ISmsService smsService, UserManager<Driver> userManager, IConfiguration config, ILogger<AccountManagementService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _smsService = smsService;
         _userManager = userManager;
+        _config = config;
         _logger = logger;
     }
 
     public async Task<Result<bool>> RequestAccountDeletionAsync(Guid driverId, DeleteAccountDto dto)
     {
         var repo = _unitOfWork.GetRepository<AccountDeletionRequest, Guid>();
-        var confirmationCode = Random.Shared.Next(100000, 999999).ToString();
+
+        // Use fake OTP code in dev mode, random 6-digit code in production
+        var useFake = _config.GetValue<bool>("OtpSettings:UseFakeOtpInDev");
+        var confirmationCode = useFake
+            ? (_config["OtpSettings:FakeOtpCode"] ?? "1234")
+            : Random.Shared.Next(100000, 999999).ToString();
 
         var request = new AccountDeletionRequest
         {
@@ -44,7 +52,6 @@ public class AccountManagementService : IAccountManagementService
         await repo.AddAsync(request);
         await _unitOfWork.SaveChangesAsync();
 
-        // TODO: Send confirmation code via SMS
         _logger.LogInformation("Account deletion requested for driver {DriverId}, code: {Code}", driverId, confirmationCode);
 
         return Result<bool>.Success(true);
