@@ -75,6 +75,16 @@ public class SmsService : ISmsService
     {
         var normalized = EgyptianPhoneHelper.Normalize(phoneNumber);
 
+        // In dev mode, accept only the fake OTP code (e.g. "1234")
+        var useFake = _config.GetValue<bool>("OtpSettings:UseFakeOtpInDev");
+        if (useFake)
+        {
+            var fakeCode = _config["OtpSettings:FakeOtpCode"] ?? "1234";
+            if (otpCode == fakeCode)
+                return Result<bool>.Success(true);
+            return Result<bool>.BadRequest(ErrorMessages.OtpInvalid);
+        }
+
         var attemptsKey = $"Sekka_OTP_ATTEMPTS:{normalized}";
         var attempts = await _cache.GetStringAsync(attemptsKey);
         var maxAttempts = _config.GetValue<int>("OtpSettings:MaxAttemptsPerNumber");
