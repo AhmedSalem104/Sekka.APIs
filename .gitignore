@@ -53,6 +53,7 @@ ScaffoldingReadMe.txt
 .DS_Store
 
 ## Secrets
+appsettings.json
 appsettings.Development.json
 appsettings.Production.json
 firebase-credentials.json
