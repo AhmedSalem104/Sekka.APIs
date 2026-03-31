@@ -12,7 +12,8 @@ public class SyncChangeDto
 {
     public SyncOperation OperationType { get; set; }
     public string EntityType { get; set; } = null!;
-    public string EntityId { get; set; } = null!;
+    public string? EntityId { get; set; }
+    public string? TempId { get; set; }
     public string Payload { get; set; } = null!;
     public DateTime LocalTimestamp { get; set; }
 }
@@ -22,8 +23,17 @@ public class SyncResultDto
     public int SyncedCount { get; set; }
     public int ConflictCount { get; set; }
     public int FailedCount { get; set; }
+    public List<SyncedItemDto> SyncedItems { get; set; } = new();
     public List<SyncConflictDto> Conflicts { get; set; } = new();
     public DateTime SyncTimestamp { get; set; }
+}
+
+public class SyncedItemDto
+{
+    public string? TempId { get; set; }
+    public string RealId { get; set; } = null!;
+    public string EntityType { get; set; } = null!;
+    public string Operation { get; set; } = null!;
 }
 
 public class SyncConflictDto

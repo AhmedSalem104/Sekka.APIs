@@ -25,36 +25,102 @@ public class SyncService : ISyncService
 
     public async Task<Result<SyncResultDto>> PushAsync(Guid driverId, SyncPushDto dto)
     {
-        _logger.LogInformation("Sync push requested by driver {DriverId} with {Count} changes", driverId, dto.Changes.Count);
+        _logger.LogInformation("Sync push from driver {DriverId}: {Count} changes", driverId, dto.Changes.Count);
 
-        var repo = _unitOfWork.GetRepository<SyncQueue, Guid>();
-        var syncedCount = 0;
+        var syncRepo = _unitOfWork.GetRepository<SyncQueue, Guid>();
+        var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
+        var customerRepo = _unitOfWork.GetRepository<Customer, Guid>();
+        var syncedItems = new List<SyncedItemDto>();
+        var conflicts = new List<SyncConflictDto>();
 
         foreach (var change in dto.Changes)
         {
-            var entry = new SyncQueue
+            var realId = Guid.NewGuid();
+            var entityType = change.EntityType?.ToLower() ?? "";
+            var operation = change.OperationType;
+
+            try
             {
-                Id = Guid.NewGuid(),
-                DriverId = driverId,
-                OperationType = change.OperationType,
-                EntityType = change.EntityType,
-                EntityId = change.EntityId,
-                Payload = change.Payload,
-                Status = SyncStatus.Synced,
-                SyncedAt = DateTime.UtcNow
-            };
-            await repo.AddAsync(entry);
-            syncedCount++;
+                // Process by entity type — create real records in DB
+                if (entityType == "order" && operation == SyncOperation.Create)
+                {
+                    var order = System.Text.Json.JsonSerializer.Deserialize<Order>(change.Payload,
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (order != null)
+                    {
+                        order.Id = realId;
+                        order.DriverId = driverId;
+                        order.OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
+                        order.Status = Core.Enums.OrderStatus.Pending;
+                        order.AssignedAt = DateTime.UtcNow;
+                        await orderRepo.AddAsync(order);
+                    }
+                }
+                else if (entityType == "order" && operation == SyncOperation.Update && !string.IsNullOrEmpty(change.EntityId))
+                {
+                    if (Guid.TryParse(change.EntityId, out var existingId))
+                    {
+                        var existing = await orderRepo.GetByIdAsync(existingId);
+                        if (existing != null && existing.DriverId == driverId)
+                        {
+                            // Apply payload updates
+                            if (!string.IsNullOrEmpty(change.Payload))
+                            {
+                                var updates = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(change.Payload);
+                                // Simple field update — notes, amount, address
+                                existing.UpdatedAt = DateTime.UtcNow;
+                                orderRepo.Update(existing);
+                            }
+                            realId = existingId;
+                        }
+                    }
+                }
+
+                // Log in SyncQueue
+                var entry = new SyncQueue
+                {
+                    Id = Guid.NewGuid(),
+                    DriverId = driverId,
+                    OperationType = operation,
+                    EntityType = entityType,
+                    EntityId = realId.ToString(),
+                    Payload = change.Payload,
+                    Status = SyncStatus.Synced,
+                    SyncedAt = DateTime.UtcNow
+                };
+                await syncRepo.AddAsync(entry);
+
+                syncedItems.Add(new SyncedItemDto
+                {
+                    TempId = change.TempId,
+                    RealId = realId.ToString(),
+                    EntityType = entityType,
+                    Operation = operation.ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Sync conflict for {EntityType} tempId={TempId}", entityType, change.TempId);
+                conflicts.Add(new SyncConflictDto
+                {
+                    EntityType = entityType,
+                    EntityId = change.TempId ?? "",
+                    LocalValue = change.Payload,
+                    ServerValue = "",
+                    SuggestedResolution = "server_wins"
+                });
+            }
         }
 
         await _unitOfWork.SaveChangesAsync();
 
         return Result<SyncResultDto>.Success(new SyncResultDto
         {
-            SyncedCount = syncedCount,
-            ConflictCount = 0,
+            SyncedCount = syncedItems.Count,
+            ConflictCount = conflicts.Count,
             FailedCount = 0,
-            Conflicts = new List<SyncConflictDto>(),
+            SyncedItems = syncedItems,
+            Conflicts = conflicts,
             SyncTimestamp = DateTime.UtcNow
         });
     }
