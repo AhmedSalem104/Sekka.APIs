@@ -167,7 +167,8 @@ builder.Services.AddScoped<IRefundService, RefundService>();
 builder.Services.AddScoped<IDisputeService, DisputeService>();
 builder.Services.AddScoped<ISurgePricingService, SurgePricingService>();
 
-// Phase 5 — Communication Services
+// Phase 5 — Communication & Voice Services
+builder.Services.AddHttpClient<ISpeechToTextService, AzureSpeechService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFirebaseService, FirebaseService>();
 builder.Services.AddScoped<ISOSService, SOSService>();
