@@ -303,6 +303,12 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Smart Delivery Management Platform"
     });
 
+    // Include XML comments in Swagger
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+        options.IncludeXmlComments(xmlPath);
+
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",

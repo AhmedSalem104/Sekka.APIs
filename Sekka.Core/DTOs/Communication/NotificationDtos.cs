@@ -33,3 +33,14 @@ public class AdminNotificationDto : NotificationDto
 {
     public string DriverName { get; set; } = null!;
 }
+
+public class RegisterDeviceTokenDto
+{
+    public string Token { get; set; } = null!;
+    public string Platform { get; set; } = "Android"; // Android | iOS
+}
+
+public class RemoveDeviceTokenDto
+{
+    public string Token { get; set; } = null!;
+}

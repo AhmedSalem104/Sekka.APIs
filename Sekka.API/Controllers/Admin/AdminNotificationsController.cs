@@ -7,6 +7,7 @@ using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Common;
 using Sekka.Core.DTOs.Communication;
 using Sekka.Core.Enums;
+using Sekka.Core.Interfaces.Services;
 using Sekka.Persistence;
 using Sekka.Persistence.Entities;
 
@@ -19,12 +20,17 @@ namespace Sekka.API.Controllers.Admin;
 public class AdminNotificationsController : ControllerBase
 {
     private readonly SekkaDbContext _db;
+    private readonly IFirebaseService _firebaseService;
 
-    public AdminNotificationsController(SekkaDbContext db)
+    public AdminNotificationsController(SekkaDbContext db, IFirebaseService firebaseService)
     {
         _db = db;
+        _firebaseService = firebaseService;
     }
 
+    /// <summary>
+    /// Send broadcast notification to all active drivers with FCM push
+    /// </summary>
     [HttpPost("broadcast")]
     public async Task<IActionResult> Broadcast([FromBody] BroadcastNotificationDto dto)
     {
@@ -47,14 +53,21 @@ public class AdminNotificationsController : ControllerBase
         _db.Notifications.AddRange(notifications);
         await _db.SaveChangesAsync();
 
+        // Send FCM push notification to all active devices
+        var pushResult = await _firebaseService.SendBroadcastAsync(dto.Title, dto.Message);
+
         return Ok(ApiResponse<object>.Success(new
         {
             SentTo = driverIds.Count,
+            PushDelivered = pushResult.IsSuccess ? pushResult.Value : 0,
             dto.Title,
             dto.Message
         }, SuccessMessages.BroadcastSent));
     }
 
+    /// <summary>
+    /// Get paginated notification history for all drivers
+    /// </summary>
     [HttpGet("history")]
     public async Task<IActionResult> GetHistory([FromQuery] PaginationDto pagination)
     {
@@ -91,6 +104,9 @@ public class AdminNotificationsController : ControllerBase
         return Ok(ApiResponse<object>.Success(result));
     }
 
+    /// <summary>
+    /// Send notification to a specific driver with FCM push
+    /// </summary>
     [HttpPost("send-to-driver")]
     public async Task<IActionResult> SendToDriver([FromBody] SendToDriverDto dto)
     {
@@ -111,6 +127,9 @@ public class AdminNotificationsController : ControllerBase
 
         _db.Notifications.Add(notification);
         await _db.SaveChangesAsync();
+
+        // Send FCM push notification to the driver's devices
+        await _firebaseService.SendPushAsync(dto.DriverId, dto.Title, dto.Message);
 
         return Ok(ApiResponse<object>.Success(new
         {
