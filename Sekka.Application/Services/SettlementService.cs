@@ -114,14 +114,21 @@ public class SettlementService : ISettlementService
         var spec = new SettlementsByDriverSpec(driverId, partnerId);
         var settlements = await repo.ListAsync(spec);
 
+        var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
+        var orderSpec = new DeliveredOrdersByPartnerSpec(driverId, partnerId);
+        var deliveredOrders = await orderRepo.ListAsync(orderSpec);
+
+        var totalCollected = deliveredOrders.Sum(o => o.Amount);
+        var totalSettled = settlements.Sum(s => s.Amount);
+
         return Result<PartnerBalanceDto>.Success(new PartnerBalanceDto
         {
             PartnerId = partnerId,
             PartnerName = partner.Name,
-            TotalCollected = 0, // Would be calculated from orders
-            TotalSettled = settlements.Sum(s => s.Amount),
-            PendingBalance = 0, // Would be calculated from orders - settlements
-            PendingOrderCount = 0
+            TotalCollected = totalCollected,
+            TotalSettled = totalSettled,
+            PendingBalance = totalCollected - totalSettled,
+            PendingOrderCount = deliveredOrders.Count
         });
     }
 
@@ -132,14 +139,30 @@ public class SettlementService : ISettlementService
         var spec = new SettlementsByDriverSpec(driverId, dateFrom: DateTime.UtcNow.Date, dateTo: DateTime.UtcNow.Date.AddDays(1));
         var settlements = await repo.ListAsync(spec);
 
+        var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
+        var todayStart = DateTime.UtcNow.Date;
+        var todayEnd = todayStart.AddDays(1);
+        var orderSpec = new DeliveredOrdersByDriverDateSpec(driverId, todayStart, todayEnd);
+        var deliveredOrders = await orderRepo.ListAsync(orderSpec);
+
+        var totalCollected = deliveredOrders.Sum(o => o.Amount);
+        var totalSettled = settlements.Sum(s => s.Amount);
+
+        var partnerIds = deliveredOrders
+            .Where(o => o.PartnerId.HasValue)
+            .Select(o => o.PartnerId!.Value)
+            .Distinct();
+        var settledPartnerIds = settlements.Select(s => s.PartnerId).Distinct();
+        var pendingPartners = partnerIds.Count(pid => !settledPartnerIds.Contains(pid));
+
         return Result<DailySettlementSummaryDto>.Success(new DailySettlementSummaryDto
         {
             Date = today,
-            TotalCollected = 0,
-            TotalSettled = settlements.Sum(s => s.Amount),
-            RemainingBalance = 0,
+            TotalCollected = totalCollected,
+            TotalSettled = totalSettled,
+            RemainingBalance = totalCollected - totalSettled,
             SettlementCount = settlements.Count,
-            PendingPartners = 0
+            PendingPartners = pendingPartners
         });
     }
 
@@ -177,6 +200,26 @@ internal class SettlementsByDriverSpec : BaseSpecification<Settlement>
             && (!dateFrom.HasValue || s.SettledAt >= dateFrom.Value)
             && (!dateTo.HasValue || s.SettledAt <= dateTo.Value));
         SetOrderByDescending(s => s.SettledAt);
+    }
+}
+
+internal class DeliveredOrdersByDriverDateSpec : BaseSpecification<Order>
+{
+    public DeliveredOrdersByDriverDateSpec(Guid driverId, DateTime from, DateTime to)
+    {
+        SetCriteria(o => o.DriverId == driverId
+            && o.Status == OrderStatus.Delivered
+            && o.CreatedAt >= from && o.CreatedAt < to);
+    }
+}
+
+internal class DeliveredOrdersByPartnerSpec : BaseSpecification<Order>
+{
+    public DeliveredOrdersByPartnerSpec(Guid driverId, Guid partnerId)
+    {
+        SetCriteria(o => o.DriverId == driverId
+            && o.PartnerId == partnerId
+            && o.Status == OrderStatus.Delivered);
     }
 }
 

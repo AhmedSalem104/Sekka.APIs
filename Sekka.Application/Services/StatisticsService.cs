@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Sekka.Core.Common;
 using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Financial;
+using Sekka.Core.Enums;
 using Sekka.Core.Interfaces.Persistence;
 using Sekka.Core.Interfaces.Services;
 using Sekka.Core.Specifications;
@@ -27,10 +28,47 @@ public class StatisticsService : IStatisticsService
         var stats = await repo.ListAsync(spec);
         var stat = stats.FirstOrDefault();
 
-        if (stat == null)
-            return Result<DailyStatsDto>.NotFound(ErrorMessages.ItemNotFound);
+        if (stat != null)
+            return Result<DailyStatsDto>.Success(MapToDto(stat));
 
-        return Result<DailyStatsDto>.Success(MapToDto(stat));
+        // No pre-aggregated record — calculate on-the-fly
+        var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
+        var dateStart = date.ToDateTime(TimeOnly.MinValue);
+        var dateEnd = date.ToDateTime(TimeOnly.MaxValue);
+        var orderSpec = new StatDriverOrdersByDateSpec(driverId, dateStart, dateEnd);
+        var orders = await orderRepo.ListAsync(orderSpec);
+
+        var expenseRepo = _unitOfWork.GetRepository<Expense, Guid>();
+        var expenseSpec = new StatDriverExpensesByDateSpec(driverId, date);
+        var expenses = await expenseRepo.ListAsync(expenseSpec);
+
+        var totalOrders = orders.Count;
+        var successfulOrders = orders.Count(o => o.Status == OrderStatus.Delivered);
+        var failedOrders = orders.Count(o => o.Status == OrderStatus.Failed);
+        var cancelledOrders = orders.Count(o => o.Status == OrderStatus.Cancelled);
+        var postponedOrders = orders.Count(o => o.Status == OrderStatus.Postponed);
+        var totalEarnings = orders.Where(o => o.Status == OrderStatus.Delivered).Sum(o => o.Amount);
+        var totalCommissions = orders.Where(o => o.Status == OrderStatus.Delivered).Sum(o => o.CommissionAmount);
+        var totalExpenses = expenses.Sum(e => e.Amount);
+        var cashCollected = orders.Where(o => o.Status == OrderStatus.Delivered
+            && o.PaymentMethod == PaymentMethod.Cash).Sum(o => o.Amount);
+
+        return Result<DailyStatsDto>.Success(new DailyStatsDto
+        {
+            Id = Guid.Empty,
+            DriverId = driverId,
+            Date = date,
+            TotalOrders = totalOrders,
+            SuccessfulOrders = successfulOrders,
+            FailedOrders = failedOrders,
+            CancelledOrders = cancelledOrders,
+            PostponedOrders = postponedOrders,
+            TotalEarnings = totalEarnings,
+            TotalCommissions = totalCommissions,
+            TotalExpenses = totalExpenses,
+            NetProfit = totalEarnings - totalCommissions - totalExpenses,
+            CashCollected = cashCollected
+        });
     }
 
     public async Task<Result<WeeklyStatsDto>> GetWeeklyAsync(Guid driverId, DateOnly weekStart)
@@ -135,5 +173,21 @@ internal class DailyStatsRangeSpec : BaseSpecification<DailyStats>
     {
         SetCriteria(s => s.DriverId == driverId && s.Date >= from && s.Date <= to);
         SetOrderBy(s => s.Date);
+    }
+}
+
+internal class StatDriverOrdersByDateSpec : BaseSpecification<Order>
+{
+    public StatDriverOrdersByDateSpec(Guid driverId, DateTime from, DateTime to)
+    {
+        SetCriteria(o => o.DriverId == driverId && o.CreatedAt >= from && o.CreatedAt <= to);
+    }
+}
+
+internal class StatDriverExpensesByDateSpec : BaseSpecification<Expense>
+{
+    public StatDriverExpensesByDateSpec(Guid driverId, DateOnly date)
+    {
+        SetCriteria(e => e.DriverId == driverId && e.Date == date);
     }
 }
