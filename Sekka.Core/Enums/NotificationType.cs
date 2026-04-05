@@ -9,5 +9,6 @@ public enum NotificationType
     Settlement = 4,
     Achievement = 5,
     SystemUpdate = 6,
-    Chat = 7
+    Chat = 7,
+    HelpRequest = 8
 }

@@ -11,4 +11,5 @@ public interface IColleagueRadarService
     Task<Result<HelpRequestDto>> RespondToHelpRequestAsync(Guid driverId, Guid requestId);
     Task<Result<bool>> ResolveHelpRequestAsync(Guid driverId, Guid requestId);
     Task<Result<List<HelpRequestDto>>> GetMyHelpRequestsAsync(Guid driverId);
+    Task<Result<bool>> UpdateLocationAsync(Guid driverId, UpdateLocationDto dto);
 }

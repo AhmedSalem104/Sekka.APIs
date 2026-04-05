@@ -53,6 +53,10 @@ public class ColleagueRadarController : ControllerBase
     public async Task<IActionResult> GetMyHelpRequests()
         => ToActionResult(await _radarService.GetMyHelpRequestsAsync(GetDriverId()));
 
+    [HttpPost("location")]
+    public async Task<IActionResult> UpdateLocation([FromBody] UpdateLocationDto dto)
+        => ToActionResult(await _radarService.UpdateLocationAsync(GetDriverId(), dto));
+
     private IActionResult ToActionResult<T>(Result<T> result, int successCode = 200, string? message = null)
     {
         if (result.IsSuccess)

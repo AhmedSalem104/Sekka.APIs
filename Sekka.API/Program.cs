@@ -211,6 +211,7 @@ builder.Services.AddHostedService<Sekka.Application.BackgroundServices.StaleOrde
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.CashAlertBackgroundService>();
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.DailyStatisticsService>();
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.RoadReportCleanupService>();
+builder.Services.AddHostedService<Sekka.Application.BackgroundServices.HelpRequestExpiryService>();
 
 // ══════════════════════════════════════════════════════════════
 // 8. Rate Limiting
