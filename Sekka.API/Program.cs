@@ -178,6 +178,10 @@ builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 builder.Services.AddScoped<INotificationDispatchService, NotificationDispatchService>();
 
 // Phase 6 — Location & Vehicles Services
+builder.Services.AddHttpClient<IMapDistanceService, OpenRouteServiceClient>();
+builder.Services.AddHttpClient<GoogleGeocodingClient>();
+builder.Services.AddScoped<IGeocodingService, CompositeGeocodingService>();
+builder.Services.AddSingleton<INavigationLinkService, NavigationLinkService>();
 builder.Services.AddScoped<IParkingSpotService, ParkingSpotService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IBreakService, BreakService>();
