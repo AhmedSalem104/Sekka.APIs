@@ -17,8 +17,7 @@ public class AzureSpeechService : ISpeechToTextService
 
     public AzureSpeechService(IConfiguration config, ILogger<AzureSpeechService> logger, HttpClient httpClient)
     {
-        _subscriptionKey = config["AzureSpeech:SubscriptionKey"]
-            ?? throw new InvalidOperationException("AzureSpeech:SubscriptionKey is not configured");
+        _subscriptionKey = config["AzureSpeech:SubscriptionKey"] ?? "";
         _region = config["AzureSpeech:Region"] ?? "westeurope";
         _logger = logger;
         _httpClient = httpClient;

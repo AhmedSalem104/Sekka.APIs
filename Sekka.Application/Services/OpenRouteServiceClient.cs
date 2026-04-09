@@ -25,8 +25,7 @@ public class OpenRouteServiceClient : IMapDistanceService
         _httpClient = httpClient;
         _logger = logger;
 
-        _apiKey = config["OpenRouteService:ApiKey"]
-            ?? throw new InvalidOperationException("OpenRouteService:ApiKey is not configured");
+        _apiKey = config["OpenRouteService:ApiKey"] ?? "";
 
         var baseUrl = config["OpenRouteService:BaseUrl"] ?? "https://api.openrouteservice.org";
         _httpClient.BaseAddress = new Uri(baseUrl);
