@@ -5,6 +5,7 @@ using Sekka.Core.Common;
 using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Common;
 using Sekka.Core.DTOs.Profile;
+using Sekka.Core.Enums;
 using Sekka.Core.Interfaces.Services;
 using System.Security.Claims;
 
@@ -102,6 +103,27 @@ public class ProfileController : ControllerBase
     [HttpGet("expenses")]
     public async Task<IActionResult> GetExpenses([FromQuery] ExpenseFilterDto filter)
         => ToActionResult(await _profileService.GetExpensesAsync(GetDriverId(), filter));
+
+    [HttpGet("expenses/categories")]
+    public IActionResult GetExpenseCategories()
+    {
+        var categories = Enum.GetValues<ExpenseType>()
+            .Select(e => new { id = (int)e, name = e.ToString(), nameAr = GetArabicName(e) })
+            .ToList();
+
+        return Ok(ApiResponse<object>.Success(categories));
+
+        static string GetArabicName(ExpenseType type) => type switch
+        {
+            ExpenseType.Fuel => "وقود",
+            ExpenseType.Maintenance => "صيانة",
+            ExpenseType.Parking => "ركنة",
+            ExpenseType.Food => "أكل",
+            ExpenseType.Phone => "رصيد موبايل",
+            ExpenseType.Other => "أخرى",
+            _ => type.ToString()
+        };
+    }
 
     [HttpPost("expenses")]
     public async Task<IActionResult> AddExpense([FromBody] CreateExpenseDto dto)

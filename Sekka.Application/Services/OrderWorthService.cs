@@ -106,20 +106,24 @@ public class OrderWorthService : IOrderWorthService
         var minPrice = suggestedPrice * 0.8m;
         var maxPrice = suggestedPrice * 1.3m;
 
+        var priorityFee = basePrice * (priorityMultiplier - 1);
+
         var breakdown = new List<PriceBreakdownItem>
         {
-            new() { Label = "سعر أساسي", Amount = basePrice, Percentage = basePrice / suggestedPrice * 100 },
-            new() { Label = "تكلفة الوقود", Amount = fuelCost, Percentage = fuelCost / suggestedPrice * 100 }
+            new() { Label = "سعر أساسي", Amount = basePrice, Percentage = Math.Round(basePrice / suggestedPrice * 100, 2) }
         };
 
-        if (priorityMultiplier > 1.0m)
-            breakdown.Add(new PriceBreakdownItem { Label = "رسوم الأولوية", Amount = basePrice * (priorityMultiplier - 1), Percentage = (priorityMultiplier - 1) * 100 });
+        if (priorityFee > 0)
+            breakdown.Add(new PriceBreakdownItem { Label = "رسوم الأولوية", Amount = priorityFee, Percentage = Math.Round(priorityFee / suggestedPrice * 100, 2) });
 
         if (peakSurcharge > 0)
-            breakdown.Add(new PriceBreakdownItem { Label = "رسوم ساعة الذروة", Amount = peakSurcharge, Percentage = peakSurcharge / suggestedPrice * 100 });
+            breakdown.Add(new PriceBreakdownItem { Label = "رسوم ساعة الذروة", Amount = peakSurcharge, Percentage = Math.Round(peakSurcharge / suggestedPrice * 100, 2) });
 
         if (itemSurcharge > 0)
-            breakdown.Add(new PriceBreakdownItem { Label = "رسوم قطع إضافية", Amount = itemSurcharge, Percentage = itemSurcharge / suggestedPrice * 100 });
+            breakdown.Add(new PriceBreakdownItem { Label = "رسوم قطع إضافية", Amount = itemSurcharge, Percentage = Math.Round(itemSurcharge / suggestedPrice * 100, 2) });
+
+        // Fuel cost is informational — not part of the price breakdown, shown separately
+        // But if UI needs it in breakdown, add as info with 0% since it's not a price component
 
         var result = new PriceCalculationResultDto
         {

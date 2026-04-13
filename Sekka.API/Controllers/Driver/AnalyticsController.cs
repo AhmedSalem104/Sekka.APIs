@@ -24,24 +24,24 @@ public class AnalyticsController : ControllerBase
     private Guid GetDriverId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet("source-breakdown")]
-    public async Task<IActionResult> GetSourceBreakdown([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
-        => ToActionResult(await _analyticsService.GetSourceBreakdownAsync(GetDriverId(), dateFrom, dateTo));
+    public async Task<IActionResult> GetSourceBreakdown([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
+        => ToActionResult(await _analyticsService.GetSourceBreakdownAsync(GetDriverId(), dateFrom ?? DateTime.UtcNow.AddDays(-30), dateTo ?? DateTime.UtcNow));
 
     [HttpGet("customer-profitability")]
-    public async Task<IActionResult> GetCustomerProfitability([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
-        => ToActionResult(await _analyticsService.GetCustomerProfitabilityAsync(GetDriverId(), dateFrom, dateTo));
+    public async Task<IActionResult> GetCustomerProfitability([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
+        => ToActionResult(await _analyticsService.GetCustomerProfitabilityAsync(GetDriverId(), dateFrom ?? DateTime.UtcNow.AddDays(-30), dateTo ?? DateTime.UtcNow));
 
     [HttpGet("region-analysis")]
-    public async Task<IActionResult> GetRegionAnalysis([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
-        => ToActionResult(await _analyticsService.GetRegionAnalysisAsync(GetDriverId(), dateFrom, dateTo));
+    public async Task<IActionResult> GetRegionAnalysis([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
+        => ToActionResult(await _analyticsService.GetRegionAnalysisAsync(GetDriverId(), dateFrom ?? DateTime.UtcNow.AddDays(-30), dateTo ?? DateTime.UtcNow));
 
     [HttpGet("time-analysis")]
-    public async Task<IActionResult> GetTimeAnalysis([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
-        => ToActionResult(await _analyticsService.GetTimeAnalysisAsync(GetDriverId(), dateFrom, dateTo));
+    public async Task<IActionResult> GetTimeAnalysis([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
+        => ToActionResult(await _analyticsService.GetTimeAnalysisAsync(GetDriverId(), dateFrom ?? DateTime.UtcNow.AddDays(-30), dateTo ?? DateTime.UtcNow));
 
     [HttpGet("cancellation-report")]
-    public async Task<IActionResult> GetCancellationReport([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
-        => ToActionResult(await _analyticsService.GetCancellationReportAsync(GetDriverId(), dateFrom, dateTo));
+    public async Task<IActionResult> GetCancellationReport([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
+        => ToActionResult(await _analyticsService.GetCancellationReportAsync(GetDriverId(), dateFrom ?? DateTime.UtcNow.AddDays(-30), dateTo ?? DateTime.UtcNow));
 
     [HttpGet("profitability-trends")]
     public async Task<IActionResult> GetProfitabilityTrends([FromQuery] string period = "monthly")

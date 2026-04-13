@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Sekka.Core.DTOs.Common;
 using Sekka.Core.Enums;
 
@@ -5,6 +6,7 @@ namespace Sekka.Core.DTOs.Settlement;
 
 public class CreateSettlementDto
 {
+    [Required]
     public Guid PartnerId { get; set; }
     public decimal Amount { get; set; }
     public SettlementType SettlementType { get; set; }

@@ -33,8 +33,8 @@ public class InvoiceController : ControllerBase
         => ToActionResult(await _invoiceService.GetByIdAsync(GetDriverId(), id));
 
     [HttpGet("summary")]
-    public async Task<IActionResult> GetSummary([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
-        => ToActionResult(await _invoiceService.GetSummaryAsync(GetDriverId(), dateFrom, dateTo));
+    public async Task<IActionResult> GetSummary([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
+        => ToActionResult(await _invoiceService.GetSummaryAsync(GetDriverId(), dateFrom ?? DateTime.UtcNow.AddDays(-30), dateTo ?? DateTime.UtcNow));
 
     [HttpGet("{id:guid}/pdf")]
     public IActionResult DownloadPdf(Guid id)

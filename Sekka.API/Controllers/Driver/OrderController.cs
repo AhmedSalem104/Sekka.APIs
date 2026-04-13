@@ -190,10 +190,11 @@ public class OrderController : ControllerBase
         => ToActionResult(await _refundService.GetRefundsAsync(id));
 
     [HttpGet("time-slots")]
-    public async Task<IActionResult> GetTimeSlots([FromQuery] DateOnly date, [FromQuery] Guid? regionId)
+    public async Task<IActionResult> GetTimeSlots([FromQuery] DateOnly? date, [FromQuery] Guid? regionId)
     {
+        var d = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var timeSlotService = HttpContext.RequestServices.GetRequiredService<ITimeSlotService>();
-        return ToActionResult(await timeSlotService.GetAvailableSlotsAsync(date, regionId));
+        return ToActionResult(await timeSlotService.GetAvailableSlotsAsync(d, regionId));
     }
 
     [HttpPost("{id:guid}/book-slot")]

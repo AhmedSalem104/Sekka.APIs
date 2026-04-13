@@ -24,24 +24,52 @@ public class StatisticsController : ControllerBase
     private Guid GetDriverId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet("daily")]
-    public async Task<IActionResult> GetDaily([FromQuery] DateOnly date)
-        => ToActionResult(await _statisticsService.GetDailyAsync(GetDriverId(), date));
+    public async Task<IActionResult> GetDaily([FromQuery] DateOnly? date)
+    {
+        var d = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        return ToActionResult(await _statisticsService.GetDailyAsync(GetDriverId(), d));
+    }
 
     [HttpGet("weekly")]
-    public async Task<IActionResult> GetWeekly([FromQuery] DateOnly weekStart)
-        => ToActionResult(await _statisticsService.GetWeeklyAsync(GetDriverId(), weekStart));
+    public async Task<IActionResult> GetWeekly([FromQuery] DateOnly? weekStart)
+    {
+        var ws = weekStart ?? StartOfWeek(DateOnly.FromDateTime(DateTime.UtcNow));
+        return ToActionResult(await _statisticsService.GetWeeklyAsync(GetDriverId(), ws));
+    }
 
     [HttpGet("monthly")]
-    public async Task<IActionResult> GetMonthly([FromQuery] int month, [FromQuery] int year)
-        => ToActionResult(await _statisticsService.GetMonthlyAsync(GetDriverId(), month, year));
+    public async Task<IActionResult> GetMonthly([FromQuery] int? month, [FromQuery] int? year)
+    {
+        var m = month ?? DateTime.UtcNow.Month;
+        var y = year ?? DateTime.UtcNow.Year;
+
+        if (m < 1 || m > 12)
+            return BadRequest(ApiResponse<MonthlyStatsDto>.Fail("الشهر لازم يكون من 1 لـ 12"));
+
+        if (y < 2020 || y > 2030)
+            return BadRequest(ApiResponse<MonthlyStatsDto>.Fail("السنة غير صالحة"));
+
+        return ToActionResult(await _statisticsService.GetMonthlyAsync(GetDriverId(), m, y));
+    }
 
     [HttpGet("heatmap")]
-    public async Task<IActionResult> GetHeatmap([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
-        => ToActionResult(await _statisticsService.GetHeatmapAsync(GetDriverId(), dateFrom, dateTo));
+    public async Task<IActionResult> GetHeatmap([FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
+    {
+        var from = dateFrom ?? DateTime.UtcNow.AddDays(-30);
+        var to = dateTo ?? DateTime.UtcNow;
+        return ToActionResult(await _statisticsService.GetHeatmapAsync(GetDriverId(), from, to));
+    }
 
     [HttpGet("today")]
     public async Task<IActionResult> GetToday()
         => ToActionResult(await _statisticsService.GetDailyAsync(GetDriverId(), DateOnly.FromDateTime(DateTime.UtcNow)));
+
+    private static DateOnly StartOfWeek(DateOnly date)
+    {
+        // Saturday-based week
+        var diff = ((int)date.DayOfWeek - (int)DayOfWeek.Saturday + 7) % 7;
+        return date.AddDays(-diff);
+    }
 
     private IActionResult ToActionResult<T>(Result<T> result, int successCode = 200, string? message = null)
     {

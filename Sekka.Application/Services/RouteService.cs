@@ -69,14 +69,31 @@ public class RouteService : IRouteService
             estimatedMinutes = (int)Math.Ceiling(optimized.TotalDurationMinutes);
             _logger.LogInformation("ORS optimization: {Distance} km, {Minutes} min for {Count} stops",
                 totalDistance, estimatedMinutes, waypoints.Count);
+
+            // Sanity check: max 100 km per stop for local delivery
+            var maxReasonable = Math.Max(50, waypoints.Count * 100.0);
+            if (totalDistance > maxReasonable)
+            {
+                _logger.LogWarning("ORS returned unrealistic distance {Distance} km for {Count} stops, capping to Haversine estimate",
+                    totalDistance, waypoints.Count);
+                totalDistance = EstimateHaversineDistance(dto.StartLatitude, dto.StartLongitude, waypoints);
+                estimatedMinutes = (int)(totalDistance * 3);
+            }
         }
         else
         {
-            // Fallback: keep original order, estimate distance
+            // Fallback: estimate from Haversine distances if coordinates available
             optimizedSequence = string.Join(",", dto.OrderIds);
-            totalDistance = dto.OrderIds.Count * 2.5;
+            if (waypoints.Count > 0)
+            {
+                totalDistance = EstimateHaversineDistance(dto.StartLatitude, dto.StartLongitude, waypoints);
+            }
+            else
+            {
+                totalDistance = dto.OrderIds.Count * 2.5;
+            }
             estimatedMinutes = (int)(totalDistance * 3);
-            _logger.LogWarning("ORS unavailable, using fallback estimate for {Count} stops", dto.OrderIds.Count);
+            _logger.LogWarning("ORS unavailable, using fallback estimate {Distance} km for {Count} stops", totalDistance, dto.OrderIds.Count);
         }
 
         var route = new Route
@@ -177,13 +194,33 @@ public class RouteService : IRouteService
                     totalDist += matrix.DistancesKm[i][i + 1];
                     totalDur += matrix.DurationsMinutes[i][i + 1];
                 }
+
+                // Sanity check
+                var maxReasonable = Math.Max(50, waypoints.Count * 100.0);
+                if (totalDist > maxReasonable)
+                {
+                    _logger.LogWarning("Matrix returned unrealistic distance {Distance} km, using Haversine", totalDist);
+                    totalDist = EstimateHaversineDistance(
+                        route.StartLatitude ?? 0, route.StartLongitude ?? 0, waypoints);
+                    totalDur = totalDist * 3;
+                }
+
                 route.TotalDistanceKm = totalDist;
                 route.EstimatedTimeMinutes = (int)Math.Ceiling(totalDur);
             }
         }
         else
         {
-            route.TotalDistanceKm = orderIds.Count * 2.5;
+            // Haversine fallback
+            if (waypoints.Count > 0 && route.StartLatitude.HasValue && route.StartLongitude.HasValue)
+            {
+                route.TotalDistanceKm = EstimateHaversineDistance(
+                    route.StartLatitude.Value, route.StartLongitude.Value, waypoints);
+            }
+            else
+            {
+                route.TotalDistanceKm = orderIds.Count * 2.5;
+            }
             route.EstimatedTimeMinutes = (int)(route.TotalDistanceKm.GetValueOrDefault() * 3);
         }
 
@@ -211,6 +248,30 @@ public class RouteService : IRouteService
         await _unitOfWork.SaveChangesAsync();
 
         return Result<RouteDto>.Success(await MapRouteToDtoWithOrders(route));
+    }
+
+    private static double EstimateHaversineDistance(double startLat, double startLon, List<IndexedWaypoint> waypoints)
+    {
+        double total = 0;
+        double curLat = startLat, curLon = startLon;
+        foreach (var wp in waypoints)
+        {
+            total += HaversineKm(curLat, curLon, wp.Latitude, wp.Longitude);
+            curLat = wp.Latitude;
+            curLon = wp.Longitude;
+        }
+        return Math.Round(total * 1.3, 2); // 1.3x factor for road vs straight-line
+    }
+
+    private static double HaversineKm(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 6371.0;
+        var dLat = (lat2 - lat1) * Math.PI / 180.0;
+        var dLon = (lon2 - lon1) * Math.PI / 180.0;
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
+            + Math.Cos(lat1 * Math.PI / 180.0) * Math.Cos(lat2 * Math.PI / 180.0)
+            * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
     }
 
     private async Task<RouteDto> MapRouteToDtoWithOrders(Route route)

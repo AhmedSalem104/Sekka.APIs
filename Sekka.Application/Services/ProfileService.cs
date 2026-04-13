@@ -4,6 +4,7 @@ using Sekka.Core.Common;
 using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Common;
 using Sekka.Core.DTOs.Profile;
+using Sekka.Core.Enums;
 using Sekka.Core.Interfaces.Persistence;
 using Sekka.Core.Interfaces.Services;
 using Sekka.Core.Specifications;
@@ -31,7 +32,38 @@ public class ProfileService : IProfileService
         if (driver == null)
             return Result<DriverProfileDto>.NotFound(ErrorMessages.DriverNotFound);
 
-        return Result<DriverProfileDto>.Success(MapToDto(driver));
+        // Calculate live stats from orders
+        var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
+        var allOrdersSpec = new ProfileDriverOrdersSpec(driverId);
+        var orders = await orderRepo.ListAsync(allOrdersSpec);
+
+        var totalOrders = orders.Count;
+        var delivered = orders.Where(o => o.Status == OrderStatus.Delivered).ToList();
+        var totalDelivered = delivered.Count;
+        var totalEarnings = delivered.Sum(o => o.Amount);
+
+        // Today stats
+        var todayStart = DateTime.UtcNow.Date;
+        var todayOrders = orders.Where(o => o.CreatedAt >= todayStart).ToList();
+        var todayDelivered = todayOrders.Where(o => o.Status == OrderStatus.Delivered).ToList();
+
+        // Wallet balance from transactions
+        var txRepo = _unitOfWork.GetRepository<WalletTransaction, Guid>();
+        var txSpec = new ProfileWalletTransactionsSpec(driverId);
+        var transactions = await txRepo.ListAsync(txSpec);
+        var lastTx = transactions.OrderByDescending(t => t.CreatedAt).FirstOrDefault();
+        var walletBalance = lastTx?.BalanceAfter ?? 0;
+
+        var dto = MapToDto(driver);
+        dto.TotalOrders = totalOrders;
+        dto.TotalDelivered = totalDelivered;
+        dto.WalletBalance = walletBalance;
+        dto.TodayOrdersCount = todayOrders.Count;
+        dto.TodayEarnings = todayDelivered.Sum(o => o.Amount);
+        dto.ShiftStatus = driver.ShiftStartTime.HasValue ? ShiftStatus.OnShift : ShiftStatus.OffShift;
+        dto.ShiftStartTime = driver.ShiftStartTime;
+
+        return Result<DriverProfileDto>.Success(dto);
     }
 
     public async Task<Result<DriverProfileDto>> UpdateProfileAsync(Guid driverId, UpdateProfileDto dto)
@@ -191,10 +223,52 @@ public class ProfileService : IProfileService
         });
     }
 
-    public Task<Result<DriverStatsDto>> GetStatsAsync(Guid driverId, DateTime? fromDate, DateTime? toDate)
+    public async Task<Result<DriverStatsDto>> GetStatsAsync(Guid driverId, DateTime? fromDate, DateTime? toDate)
     {
-        // TODO: Calculate from Orders table
-        return Task.FromResult(Result<DriverStatsDto>.Success(new DriverStatsDto()));
+        var driver = await _userManager.FindByIdAsync(driverId.ToString());
+        if (driver == null)
+            return Result<DriverStatsDto>.NotFound(ErrorMessages.DriverNotFound);
+
+        var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
+        BaseSpecification<Order> spec = fromDate.HasValue || toDate.HasValue
+            ? new ProfileDriverOrdersInRangeSpec(driverId, fromDate ?? DateTime.MinValue, toDate ?? DateTime.UtcNow)
+            : new ProfileDriverOrdersSpec(driverId);
+        var orders = await orderRepo.ListAsync(spec);
+
+        var totalOrders = orders.Count;
+        var delivered = orders.Where(o => o.Status == OrderStatus.Delivered).ToList();
+        var failed = orders.Count(o => o.Status == OrderStatus.Failed);
+        var cancelled = orders.Count(o => o.Status == OrderStatus.Cancelled);
+        var totalEarnings = delivered.Sum(o => o.Amount);
+        var totalCommissions = delivered.Sum(o => o.CommissionAmount);
+
+        // Average delivery time (from PickedUpAt to DeliveredAt)
+        var deliveryTimes = delivered
+            .Where(o => o.PickedUpAt.HasValue && o.DeliveredAt.HasValue)
+            .Select(o => (o.DeliveredAt!.Value - o.PickedUpAt!.Value).TotalMinutes)
+            .ToList();
+        var avgDeliveryTime = deliveryTimes.Count > 0 ? (decimal)deliveryTimes.Average() : 0;
+
+        // Best day
+        var bestDayGroup = delivered
+            .Where(o => o.DeliveredAt.HasValue)
+            .GroupBy(o => o.DeliveredAt!.Value.Date)
+            .OrderByDescending(g => g.Count())
+            .FirstOrDefault();
+
+        return Result<DriverStatsDto>.Success(new DriverStatsDto
+        {
+            TotalOrders = totalOrders,
+            TotalDelivered = delivered.Count,
+            TotalFailed = failed,
+            TotalCancelled = cancelled,
+            SuccessRate = totalOrders > 0 ? Math.Round((decimal)delivered.Count / totalOrders * 100, 1) : 0,
+            TotalEarnings = totalEarnings,
+            TotalCommissions = totalCommissions,
+            AverageDeliveryTimeMinutes = Math.Round(avgDeliveryTime, 1),
+            BestDay = bestDayGroup?.Key,
+            BestDayOrders = bestDayGroup?.Count() ?? 0
+        });
     }
 
     public Task<Result<List<BadgeDto>>> GetBadgesAsync(Guid driverId)
@@ -335,5 +409,29 @@ internal class EmergencyContactsByDriverSpec : BaseSpecification<EmergencyContac
     {
         SetCriteria(c => c.DriverId == driverId);
         SetOrderBy(c => c.SortOrder);
+    }
+}
+
+internal class ProfileDriverOrdersSpec : BaseSpecification<Order>
+{
+    public ProfileDriverOrdersSpec(Guid driverId)
+    {
+        SetCriteria(o => o.DriverId == driverId);
+    }
+}
+
+internal class ProfileDriverOrdersInRangeSpec : BaseSpecification<Order>
+{
+    public ProfileDriverOrdersInRangeSpec(Guid driverId, DateTime from, DateTime to)
+    {
+        SetCriteria(o => o.DriverId == driverId && o.CreatedAt >= from && o.CreatedAt <= to);
+    }
+}
+
+internal class ProfileWalletTransactionsSpec : BaseSpecification<WalletTransaction>
+{
+    public ProfileWalletTransactionsSpec(Guid driverId)
+    {
+        SetCriteria(t => t.DriverId == driverId);
     }
 }

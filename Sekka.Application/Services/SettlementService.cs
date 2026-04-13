@@ -59,6 +59,18 @@ public class SettlementService : ISettlementService
         if (partner == null)
             return Result<SettlementDto>.NotFound(ErrorMessages.PartnerNotFound);
 
+        // Validate settlement amount doesn't exceed pending balance
+        var existingSettlements = await _unitOfWork.GetRepository<Settlement, Guid>()
+            .ListAsync(new SettlementsByDriverSpec(driverId, dto.PartnerId));
+        var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
+        var deliveredOrders = await orderRepo.ListAsync(new DeliveredOrdersByPartnerSpec(driverId, dto.PartnerId));
+        var totalCollected = deliveredOrders.Sum(o => o.Amount);
+        var totalSettled = existingSettlements.Sum(s => s.Amount);
+        var pendingBalance = totalCollected - totalSettled;
+
+        if (dto.Amount > pendingBalance)
+            return Result<SettlementDto>.BadRequest($"مبلغ التسوية ({dto.Amount}) أكبر من الرصيد المتبقي ({Math.Max(0, pendingBalance)})");
+
         var settlement = new Settlement
         {
             Id = Guid.NewGuid(),
@@ -93,6 +105,15 @@ public class SettlementService : ISettlementService
             CreatedAt = DateTime.UtcNow
         };
         await txRepo.AddAsync(walletTx);
+
+        // Deduct cashOnHand on the driver
+        var driverRepo = _unitOfWork.GetRepository<Driver, Guid>();
+        var driver = await driverRepo.GetByIdAsync(driverId);
+        if (driver != null)
+        {
+            driver.CashOnHand = Math.Max(0, driver.CashOnHand - dto.Amount);
+            driverRepo.Update(driver);
+        }
 
         await _unitOfWork.SaveChangesAsync();
         _logger.LogInformation("Settlement {SettlementId} created for driver {DriverId}, partner {PartnerId}, amount {Amount}",

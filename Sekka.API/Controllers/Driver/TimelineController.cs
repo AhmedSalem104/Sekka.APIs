@@ -24,27 +24,31 @@ public class TimelineController : ControllerBase
     private Guid GetDriverId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet("daily")]
-    public async Task<IActionResult> GetDaily([FromQuery] DateOnly date)
+    public async Task<IActionResult> GetDaily([FromQuery] DateOnly? date)
     {
-        var result = await _timelineService.GetDailyAsync(GetDriverId(), date);
+        var d = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var result = await _timelineService.GetDailyAsync(GetDriverId(), d);
         return result.IsSuccess
             ? Ok(ApiResponse<object>.Success(result.Value!))
             : BadRequest(ApiResponse<object>.Fail(result.Error!.Message));
     }
 
     [HttpGet("range")]
-    public async Task<IActionResult> GetRange([FromQuery] DateOnly dateFrom, [FromQuery] DateOnly dateTo)
+    public async Task<IActionResult> GetRange([FromQuery] DateOnly? dateFrom, [FromQuery] DateOnly? dateTo)
     {
-        var result = await _timelineService.GetRangeAsync(GetDriverId(), dateFrom, dateTo);
+        var from = dateFrom ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-7));
+        var to = dateTo ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var result = await _timelineService.GetRangeAsync(GetDriverId(), from, to);
         return result.IsSuccess
             ? Ok(ApiResponse<object>.Success(result.Value!))
             : BadRequest(ApiResponse<object>.Fail(result.Error!.Message));
     }
 
     [HttpGet("daily/filter")]
-    public async Task<IActionResult> GetFiltered([FromQuery] DateOnly date, [FromQuery] List<TimelineEventType> eventTypes)
+    public async Task<IActionResult> GetFiltered([FromQuery] DateOnly? date, [FromQuery] List<TimelineEventType> eventTypes)
     {
-        var result = await _timelineService.GetFilteredAsync(GetDriverId(), date, eventTypes);
+        var d = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var result = await _timelineService.GetFilteredAsync(GetDriverId(), d, eventTypes);
         return result.IsSuccess
             ? Ok(ApiResponse<object>.Success(result.Value!))
             : BadRequest(ApiResponse<object>.Fail(result.Error!.Message));

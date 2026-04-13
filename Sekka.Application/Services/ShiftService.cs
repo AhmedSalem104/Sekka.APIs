@@ -48,7 +48,7 @@ public class ShiftService : IShiftService
 
         var shiftDto = new ShiftDto
         {
-            Id = driverId,
+            Id = DeriveShiftId(driverId, driver.ShiftStartTime.Value),
             DriverId = driverId,
             Status = ShiftStatus.OnShift,
             StartTime = driver.ShiftStartTime.Value,
@@ -97,7 +97,7 @@ public class ShiftService : IShiftService
 
         var shiftDto = new ShiftDto
         {
-            Id = driverId,
+            Id = DeriveShiftId(driverId, shiftStart),
             DriverId = driverId,
             Status = ShiftStatus.OffShift,
             StartTime = shiftStart,
@@ -135,7 +135,7 @@ public class ShiftService : IShiftService
 
         var shiftDto = new ShiftDto
         {
-            Id = driverId,
+            Id = DeriveShiftId(driverId, shiftStart),
             DriverId = driverId,
             Status = ShiftStatus.OnShift,
             StartTime = shiftStart,
@@ -166,19 +166,55 @@ public class ShiftService : IShiftService
         var spec = new OrdersByDriverInRangeSpec(driverId, startUtc, endUtc);
         var orders = await orderRepo.ListAsync(spec);
 
-        var totalDays = (dateTo.ToDateTime(TimeOnly.MinValue) - dateFrom.ToDateTime(TimeOnly.MinValue)).TotalDays + 1;
+        // Calculate actual working days (days where driver had at least 1 delivered order)
+        var workingDays = orders
+            .Where(o => o.DeliveredAt.HasValue)
+            .Select(o => o.DeliveredAt!.Value.Date)
+            .Distinct()
+            .ToList();
+
+        var totalShifts = workingDays.Count;
+
+        // Estimate hours from first-to-last order per day
+        double totalHoursWorked = 0;
+        foreach (var day in workingDays)
+        {
+            var dayOrders = orders
+                .Where(o => o.DeliveredAt.HasValue && o.DeliveredAt.Value.Date == day)
+                .OrderBy(o => o.DeliveredAt)
+                .ToList();
+
+            if (dayOrders.Count >= 2)
+            {
+                var firstOrder = dayOrders.First().DeliveredAt!.Value;
+                var lastOrder = dayOrders.Last().DeliveredAt!.Value;
+                totalHoursWorked += (lastOrder - firstOrder).TotalHours + 0.5; // +30min buffer
+            }
+            else
+            {
+                totalHoursWorked += 1; // At least 1 hour for a single order day
+            }
+        }
 
         var summary = new ShiftSummaryDto
         {
-            TotalShifts = (int)totalDays,
-            TotalHoursWorked = totalDays * 8, // Estimate based on period
+            TotalShifts = totalShifts,
+            TotalHoursWorked = Math.Round(totalHoursWorked, 1),
             TotalOrdersCompleted = orders.Count,
             TotalEarnings = orders.Sum(o => o.Amount),
             TotalDistanceKm = orders.Sum(o => o.DistanceKm ?? 0),
-            AverageShiftDurationHours = totalDays > 0 ? (totalDays * 8) / totalDays : 0
+            AverageShiftDurationHours = totalShifts > 0 ? Math.Round(totalHoursWorked / totalShifts, 1) : 0
         };
 
         return Result<ShiftSummaryDto>.Success(summary);
+    }
+    private static Guid DeriveShiftId(Guid driverId, DateTime shiftStart)
+    {
+        var bytes = driverId.ToByteArray();
+        var ticks = BitConverter.GetBytes(shiftStart.Ticks);
+        for (int i = 0; i < ticks.Length; i++)
+            bytes[i] ^= ticks[i];
+        return new Guid(bytes);
     }
 }
 
