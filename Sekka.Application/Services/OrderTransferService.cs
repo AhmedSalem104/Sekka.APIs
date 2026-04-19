@@ -16,13 +16,17 @@ public class OrderTransferService : IOrderTransferService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly UserManager<Driver> _userManager;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<OrderTransferService> _logger;
 
-    public OrderTransferService(IUnitOfWork unitOfWork, IMapper mapper, UserManager<Driver> userManager, ILogger<OrderTransferService> logger)
+    public OrderTransferService(IUnitOfWork unitOfWork, IMapper mapper,
+        UserManager<Driver> userManager, INotificationService notificationService,
+        ILogger<OrderTransferService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _userManager = userManager;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -48,6 +52,19 @@ public class OrderTransferService : IOrderTransferService
         var transferRepo = _unitOfWork.GetRepository<OrderTransferLog, Guid>();
         await transferRepo.AddAsync(transfer);
         await _unitOfWork.SaveChangesAsync();
+
+        // Notify the originating driver
+        await _notificationService.CreateAndPushAsync(driverId, NotificationType.NewOrder,
+            "تم تحويل الأوردر", $"أوردر #{order.OrderNumber} تم تحويله",
+            "ORDER_TRANSFER", transfer.Id.ToString());
+
+        // Notify the receiving driver (if specified)
+        if (dto.ToDriverId.HasValue)
+        {
+            await _notificationService.CreateAndPushAsync(dto.ToDriverId.Value, NotificationType.NewOrder,
+                "أوردر محوّل إليك", $"تم تحويل أوردر #{order.OrderNumber} إليك",
+                "ORDER_TRANSFER", transfer.Id.ToString());
+        }
 
         // Build response with actual names
         var fromDriver = await _userManager.FindByIdAsync(driverId.ToString());

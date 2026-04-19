@@ -13,11 +13,14 @@ namespace Sekka.Application.Services;
 public class PaymentRequestService : IPaymentRequestService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<PaymentRequestService> _logger;
 
-    public PaymentRequestService(IUnitOfWork unitOfWork, ILogger<PaymentRequestService> logger)
+    public PaymentRequestService(IUnitOfWork unitOfWork, INotificationService notificationService,
+        ILogger<PaymentRequestService> logger)
     {
         _unitOfWork = unitOfWork;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -76,6 +79,10 @@ public class PaymentRequestService : IPaymentRequestService
 
         _logger.LogInformation("Payment request {RequestId} created for driver {DriverId}, ref: {RefCode}, amount: {Amount}",
             request.Id, driverId, referenceCode, dto.Amount);
+
+        await _notificationService.CreateAndPushAsync(driverId, NotificationType.CashAlert,
+            "طلب دفع جديد", $"تم إنشاء طلب دفع بمبلغ {request.Amount:N2} جنيه — الكود: {request.ReferenceCode}",
+            "PAYMENT_REQUEST", request.Id.ToString());
 
         return Result<PaymentRequestDto>.Success(MapToDto(request));
     }

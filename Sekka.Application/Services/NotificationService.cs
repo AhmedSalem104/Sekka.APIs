@@ -4,6 +4,7 @@ using Sekka.Core.Common;
 using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Common;
 using Sekka.Core.DTOs.Communication;
+using Sekka.Core.Enums;
 using Sekka.Core.Interfaces.Persistence;
 using Sekka.Core.Interfaces.Services;
 using Sekka.Core.Specifications;
@@ -15,12 +16,15 @@ public class NotificationService : INotificationService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFirebaseService _firebaseService;
     private readonly ILogger<NotificationService> _logger;
 
-    public NotificationService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<NotificationService> logger)
+    public NotificationService(IUnitOfWork unitOfWork, IMapper mapper,
+        IFirebaseService firebaseService, ILogger<NotificationService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _firebaseService = firebaseService;
         _logger = logger;
     }
 
@@ -85,6 +89,47 @@ public class NotificationService : INotificationService
         var count = await repo.CountAsync(spec);
 
         return Result<int>.Success(count);
+    }
+
+    public async Task CreateAndPushAsync(Guid driverId, NotificationType type, string title, string message,
+        string? actionType = null, string? actionData = null,
+        NotificationPriority priority = NotificationPriority.Medium)
+    {
+        try
+        {
+            // 1. Save to DB
+            var notification = new Notification
+            {
+                Id = Guid.NewGuid(),
+                DriverId = driverId,
+                NotificationType = type,
+                Title = title,
+                Message = message,
+                IsRead = false,
+                ActionType = actionType,
+                ActionData = actionData,
+                Priority = priority
+            };
+            var repo = _unitOfWork.GetRepository<Notification, Guid>();
+            await repo.AddAsync(notification);
+            await _unitOfWork.SaveChangesAsync();
+
+            // 2. Send Firebase push
+            var data = new Dictionary<string, string>
+            {
+                ["type"] = type.ToString(),
+                ["notificationId"] = notification.Id.ToString()
+            };
+            if (actionType != null) data["actionType"] = actionType;
+            if (actionData != null) data["actionData"] = actionData;
+
+            await _firebaseService.SendPushAsync(driverId, title, message, data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create/push notification for driver {DriverId}", driverId);
+            // Don't throw — notifications should never break business flow
+        }
     }
 }
 

@@ -13,11 +13,14 @@ namespace Sekka.Application.Services;
 public class SettlementService : ISettlementService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<SettlementService> _logger;
 
-    public SettlementService(IUnitOfWork unitOfWork, ILogger<SettlementService> logger)
+    public SettlementService(IUnitOfWork unitOfWork, INotificationService notificationService,
+        ILogger<SettlementService> logger)
     {
         _unitOfWork = unitOfWork;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -118,6 +121,10 @@ public class SettlementService : ISettlementService
         await _unitOfWork.SaveChangesAsync();
         _logger.LogInformation("Settlement {SettlementId} created for driver {DriverId}, partner {PartnerId}, amount {Amount}",
             settlement.Id, driverId, dto.PartnerId, dto.Amount);
+
+        await _notificationService.CreateAndPushAsync(driverId, NotificationType.Settlement,
+            "تسوية جديدة", $"تم تسجيل تسوية بمبلغ {settlement.Amount:N2} جنيه",
+            "SETTLEMENT", settlement.Id.ToString());
 
         var resultDto = MapToDto(settlement);
         resultDto.PartnerName = partner.Name;

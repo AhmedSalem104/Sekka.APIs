@@ -16,12 +16,15 @@ public class OrderService : IOrderService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<OrderService> _logger;
 
-    public OrderService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<OrderService> logger)
+    public OrderService(IUnitOfWork unitOfWork, IMapper mapper,
+        INotificationService notificationService, ILogger<OrderService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -78,6 +81,10 @@ public class OrderService : IOrderService
 
         await repo.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
+
+        await _notificationService.CreateAndPushAsync(driverId, NotificationType.NewOrder,
+            "تم إنشاء أوردر جديد", $"أوردر #{order.OrderNumber} تم إنشاؤه بنجاح",
+            "ORDER", order.Id.ToString());
 
         return Result<OrderDto>.Success(_mapper.Map<OrderDto>(order));
     }
@@ -180,6 +187,10 @@ public class OrderService : IOrderService
         repo.Update(order);
         await _unitOfWork.SaveChangesAsync();
 
+        await _notificationService.CreateAndPushAsync(driverId, NotificationType.NewOrder,
+            "تحديث حالة الأوردر", $"أوردر #{order.OrderNumber} — الحالة: {dto.Status}",
+            "ORDER", order.Id.ToString());
+
         return Result<OrderDto>.Success(_mapper.Map<OrderDto>(order));
     }
 
@@ -232,6 +243,10 @@ public class OrderService : IOrderService
 
         await _unitOfWork.SaveChangesAsync();
 
+        await _notificationService.CreateAndPushAsync(driverId, NotificationType.NewOrder,
+            "تم تسليم الأوردر", $"أوردر #{order.OrderNumber} تم تسليمه بنجاح",
+            "ORDER", order.Id.ToString());
+
         return Result<OrderDto>.Success(_mapper.Map<OrderDto>(order));
     }
 
@@ -265,6 +280,10 @@ public class OrderService : IOrderService
 
         await attemptRepo.AddAsync(attempt);
         await _unitOfWork.SaveChangesAsync();
+
+        await _notificationService.CreateAndPushAsync(driverId, NotificationType.NewOrder,
+            "فشل تسليم الأوردر", $"أوردر #{order.OrderNumber} — تم تسجيل محاولة تسليم فاشلة",
+            "ORDER", order.Id.ToString());
 
         return Result<DeliveryAttemptDto>.Success(_mapper.Map<DeliveryAttemptDto>(attempt));
     }

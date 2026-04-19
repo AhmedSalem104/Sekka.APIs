@@ -14,12 +14,15 @@ public class CancellationService : ICancellationService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<CancellationService> _logger;
 
-    public CancellationService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<CancellationService> logger)
+    public CancellationService(IUnitOfWork unitOfWork, IMapper mapper,
+        INotificationService notificationService, ILogger<CancellationService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -56,6 +59,10 @@ public class CancellationService : ICancellationService
         var logRepo = _unitOfWork.GetRepository<CancellationLog, Guid>();
         await logRepo.AddAsync(log);
         await _unitOfWork.SaveChangesAsync();
+
+        await _notificationService.CreateAndPushAsync(driverId, NotificationType.NewOrder,
+            "تم إلغاء الأوردر", $"أوردر #{order.OrderNumber} تم إلغاؤه",
+            "ORDER", orderId.ToString());
 
         return Result<CancellationLogDto>.Success(_mapper.Map<CancellationLogDto>(log));
     }
