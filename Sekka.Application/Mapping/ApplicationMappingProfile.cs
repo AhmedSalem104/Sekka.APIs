@@ -57,7 +57,9 @@ public class ApplicationMappingProfile : Profile
         CreateMap<Core.DTOs.Customer.SaveAddressDto, Address>()
             .ForMember(d => d.Id, opt => opt.Ignore())
             .ForMember(d => d.DriverId, opt => opt.Ignore());
-        CreateMap<Rating, Core.DTOs.Customer.RatingDto>();
+        CreateMap<Rating, Core.DTOs.Customer.RatingDto>()
+            .ForMember(d => d.PositiveTags, opt => opt.MapFrom(s => BuildPositiveTags(s)))
+            .ForMember(d => d.NegativeTags, opt => opt.MapFrom(s => BuildNegativeTags(s)));
         CreateMap<CallerIdNote, Core.DTOs.Customer.CallerIdNoteDto>();
         CreateMap<CallerIdNote, Core.DTOs.Customer.CallerIdDto>();
         CreateMap<BlockedCustomer, Core.DTOs.Admin.BlacklistEntryDto>();
@@ -144,5 +146,25 @@ public class ApplicationMappingProfile : Profile
         CreateMap<SavingsCirclePayment, Core.DTOs.Social.CirclePaymentDto>();
         CreateMap<FieldAssistanceRequest, Core.DTOs.Social.HelpRequestDto>();
         CreateMap<RoadReport, Core.DTOs.Social.RoadReportDto>();
+    }
+
+    private static List<string> BuildPositiveTags(Rating r)
+    {
+        var tags = new List<string>();
+        if (r.QuickResponse) tags.Add("سرعة الاستجابة");
+        if (r.ClearAddress) tags.Add("عنوان واضح");
+        if (r.RespectfulBehavior) tags.Add("تعامل محترم");
+        if (r.EasyPayment) tags.Add("دفع سهل");
+        return tags;
+    }
+
+    private static List<string> BuildNegativeTags(Rating r)
+    {
+        var tags = new List<string>();
+        if (r.WrongAddress) tags.Add("عنوان خاطئ");
+        if (r.NoAnswer) tags.Add("لا يرد");
+        if (r.DelayedPickup) tags.Add("تأخير في الاستلام");
+        if (r.PaymentIssue) tags.Add("مشكلة في الدفع");
+        return tags;
     }
 }

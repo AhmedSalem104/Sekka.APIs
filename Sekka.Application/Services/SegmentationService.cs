@@ -17,8 +17,8 @@ public class SegmentationService : ISegmentationService
     }
 
     public Task<Result<bool>> RefreshSegmentAsync(Guid segmentId)
-        => Task.FromResult(Result<bool>.BadRequest(ErrorMessages.FeatureUnderDevelopment("تحديث الشريحة")));
+        => Task.FromResult(Result<bool>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("تحديث الشريحة")));
 
     public Task<Result<PagedResult<SegmentMemberDto>>> GetSegmentMembersAsync(Guid segmentId, PaginationDto pagination)
-        => Task.FromResult(Result<PagedResult<SegmentMemberDto>>.BadRequest(ErrorMessages.FeatureUnderDevelopment("أعضاء الشريحة")));
+        => Task.FromResult(Result<PagedResult<SegmentMemberDto>>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("أعضاء الشريحة")));
 }

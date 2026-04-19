@@ -54,10 +54,18 @@ public class ProfileService : IProfileService
         var lastTx = transactions.OrderByDescending(t => t.CreatedAt).FirstOrDefault();
         var walletBalance = lastTx?.BalanceAfter ?? 0;
 
+        // CashOnHand from ledger: cash collected - settlements
+        var cashCollected = transactions.Where(t => t.TransactionType == TransactionType.OrderPayment).Sum(t => t.Amount);
+        var settlementRepo = _unitOfWork.GetRepository<Settlement, Guid>();
+        var settlementSpec = new ProfileDriverSettlementsSpec(driverId);
+        var settlements = await settlementRepo.ListAsync(settlementSpec);
+        var cashOnHand = cashCollected - settlements.Sum(s => s.Amount);
+
         var dto = MapToDto(driver);
         dto.TotalOrders = totalOrders;
         dto.TotalDelivered = totalDelivered;
         dto.WalletBalance = walletBalance;
+        dto.CashOnHand = cashOnHand;
         dto.TodayOrdersCount = todayOrders.Count;
         dto.TodayEarnings = todayDelivered.Sum(o => o.Amount);
         dto.ShiftStatus = driver.ShiftStartTime.HasValue ? ShiftStatus.OnShift : ShiftStatus.OffShift;
@@ -348,7 +356,7 @@ public class ProfileService : IProfileService
     public Task<Result<SubscriptionDto>> UpgradeSubscriptionAsync(Guid driverId, UpgradeSubscriptionDto dto)
     {
         // TODO: Process subscription upgrade
-        return Task.FromResult(Result<SubscriptionDto>.BadRequest(ErrorMessages.SubscriptionsUnderDev));
+        return Task.FromResult(Result<SubscriptionDto>.NotImplemented(ErrorMessages.SubscriptionsUnderDev));
     }
 
     public Task<Result<List<DriverAchievementDto>>> GetAchievementsAsync(Guid driverId)
@@ -433,5 +441,13 @@ internal class ProfileWalletTransactionsSpec : BaseSpecification<WalletTransacti
     public ProfileWalletTransactionsSpec(Guid driverId)
     {
         SetCriteria(t => t.DriverId == driverId);
+    }
+}
+
+internal class ProfileDriverSettlementsSpec : BaseSpecification<Settlement>
+{
+    public ProfileDriverSettlementsSpec(Guid driverId)
+    {
+        SetCriteria(s => s.DriverId == driverId);
     }
 }

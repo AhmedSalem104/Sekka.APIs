@@ -23,16 +23,16 @@ public class SmartAddressService : ISmartAddressService
 
     public Task<Result<SmartAddressDto>> GetSmartAddressAsync(string rawAddress)
     {
-        return Task.FromResult(Result<SmartAddressDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("العنوان الذكي")));
+        return Task.FromResult(Result<SmartAddressDto>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("العنوان الذكي")));
     }
 
     public Task<Result<List<SmartAddressDto>>> SearchAddressAsync(string query, double? nearLatitude, double? nearLongitude)
     {
-        return Task.FromResult(Result<List<SmartAddressDto>>.BadRequest(ErrorMessages.FeatureUnderDevelopment("البحث عن عنوان")));
+        return Task.FromResult(Result<List<SmartAddressDto>>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("البحث عن عنوان")));
     }
 
     public Task<Result<SmartAddressDto>> GeocodeAsync(double latitude, double longitude)
     {
-        return Task.FromResult(Result<SmartAddressDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("تحويل الإحداثيات")));
+        return Task.FromResult(Result<SmartAddressDto>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("تحويل الإحداثيات")));
     }
 }

@@ -96,7 +96,7 @@ public class ReferralService : IReferralService
     /// </summary>
     public async Task<Result<ReferralDto>> ApplyCodeAsync(Guid newDriverId, ApplyReferralCodeDto dto)
     {
-        var code = dto.ReferralCode?.Trim().ToUpperInvariant();
+        var code = dto.GetCode().Trim().ToUpperInvariant();
         if (string.IsNullOrEmpty(code))
             return Result<ReferralDto>.BadRequest("كود الإحالة مطلوب");
 

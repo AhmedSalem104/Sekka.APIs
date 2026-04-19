@@ -30,8 +30,11 @@ public class ParkingSpotDto
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public string? Address { get; set; }
+    public string? Notes { get; set; }
     public int QualityRating { get; set; }
     public bool IsPaid { get; set; }
+    public decimal? PaidAmount { get; set; }
+    public bool IsShared { get; set; }
     public int UsageCount { get; set; }
     public DateTime LastUsedAt { get; set; }
 }

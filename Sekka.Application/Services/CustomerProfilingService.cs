@@ -16,5 +16,5 @@ public class CustomerProfilingService : ICustomerProfilingService
     }
 
     public Task<Result<CustomerInterestProfileDto>> GetProfileAsync(Guid driverId, Guid customerId)
-        => Task.FromResult(Result<CustomerInterestProfileDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("ملف العميل التفصيلي")));
+        => Task.FromResult(Result<CustomerInterestProfileDto>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("ملف العميل التفصيلي")));
 }

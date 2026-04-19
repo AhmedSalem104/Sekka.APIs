@@ -19,5 +19,5 @@ public class CashSafetyService : ICashSafetyService
     }
 
     public Task<Result<CashStatusDto>> GetCashStatusAsync(Guid driverId)
-        => Task.FromResult(Result<CashStatusDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("أمان النقدية")));
+        => Task.FromResult(Result<CashStatusDto>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("أمان النقدية")));
 }

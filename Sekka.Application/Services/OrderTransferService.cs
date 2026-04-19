@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Sekka.Core.Common;
 using Sekka.Core.Common.Messages;
@@ -14,12 +15,14 @@ public class OrderTransferService : IOrderTransferService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly UserManager<Driver> _userManager;
     private readonly ILogger<OrderTransferService> _logger;
 
-    public OrderTransferService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<OrderTransferService> logger)
+    public OrderTransferService(IUnitOfWork unitOfWork, IMapper mapper, UserManager<Driver> userManager, ILogger<OrderTransferService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _userManager = userManager;
         _logger = logger;
     }
 
@@ -46,6 +49,23 @@ public class OrderTransferService : IOrderTransferService
         await transferRepo.AddAsync(transfer);
         await _unitOfWork.SaveChangesAsync();
 
-        return Result<OrderTransferResponseDto>.Success(_mapper.Map<OrderTransferResponseDto>(transfer));
+        // Build response with actual names
+        var fromDriver = await _userManager.FindByIdAsync(driverId.ToString());
+        Driver? toDriver = null;
+        if (dto.ToDriverId.HasValue)
+            toDriver = await _userManager.FindByIdAsync(dto.ToDriverId.Value.ToString());
+
+        var response = new OrderTransferResponseDto
+        {
+            Id = transfer.Id,
+            OrderNumber = order.OrderNumber,
+            FromDriverName = fromDriver?.Name ?? "غير معروف",
+            ToDriverName = toDriver?.Name,
+            DeepLinkToken = transfer.DeepLinkToken,
+            Status = transfer.Status,
+            TransferredAt = transfer.TransferredAt
+        };
+
+        return Result<OrderTransferResponseDto>.Success(response);
     }
 }

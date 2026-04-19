@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Sekka.Core.Enums;
 
 namespace Sekka.Core.DTOs.Settings;
@@ -46,9 +47,16 @@ public class UpdateNotificationPrefsDto
 
 public class UpdateCostParamsDto
 {
+    [Range(0.01, 1000, ErrorMessage = "سعر الوقود لازم يكون بين 0.01 و 1000")]
     public decimal? FuelPricePerLiter { get; set; }
+
+    [Range(0.01, 100, ErrorMessage = "استهلاك الوقود لازم يكون بين 0.01 و 100")]
     public decimal? FuelConsumptionPer100Km { get; set; }
+
+    [Range(0.01, 10000, ErrorMessage = "سعر الساعة لازم يكون بين 0.01 و 10000")]
     public decimal? HourlyRate { get; set; }
+
+    [Range(0.01, 100, ErrorMessage = "تكلفة الإهلاك لازم تكون بين 0.01 و 100")]
     public decimal? DepreciationPerKm { get; set; }
 }
 

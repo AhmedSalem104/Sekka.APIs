@@ -204,9 +204,9 @@ public class CustomerService : ICustomerService
         if (customer is null || customer.DriverId != driverId)
             return Result<CustomerEngagementDto>.NotFound(ErrorMessages.ItemNotFound);
 
-        var daysSinceLastOrder = customer.LastDeliveryDate.HasValue
+        int? daysSinceLastOrder = customer.LastDeliveryDate.HasValue
             ? (int)(DateTime.UtcNow - customer.LastDeliveryDate.Value).TotalDays
-            : -1;
+            : null;
 
         var level = customer.TotalDeliveries switch
         {

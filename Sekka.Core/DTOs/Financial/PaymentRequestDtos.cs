@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Sekka.Core.DTOs.Common;
 using Sekka.Core.Enums;
 
@@ -24,7 +25,10 @@ public class PaymentRequestDto
 public class CreatePaymentRequestDto
 {
     public PaymentPurpose PaymentPurpose { get; set; }
+
+    [Range(0.01, 1000000, ErrorMessage = "المبلغ لازم يكون أكبر من صفر")]
     public decimal Amount { get; set; }
+
     public ManualPaymentMethod PaymentMethod { get; set; }
     public string? SenderPhone { get; set; }
     public string? SenderName { get; set; }

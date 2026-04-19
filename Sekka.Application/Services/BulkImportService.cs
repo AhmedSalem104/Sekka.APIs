@@ -101,6 +101,10 @@ public class BulkImportService : IBulkImportService
         _logger.LogInformation("Bulk import completed for driver {DriverId}: {Success}/{Total} imported",
             driverId, result.SuccessfulImports, result.TotalParsed);
 
+        // If ALL imports failed, return failure instead of success
+        if (result.SuccessfulImports == 0 && result.FailedImports > 0)
+            return Result<BulkImportResultDto>.BadRequest("فشل استيراد جميع الأوردرات. تحقق من صيغة البيانات.", result);
+
         return Result<BulkImportResultDto>.Success(result);
     }
 

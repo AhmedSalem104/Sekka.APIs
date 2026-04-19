@@ -74,6 +74,7 @@ public class CustomerController : ControllerBase
             "NOT_FOUND" => NotFound(ApiResponse<T>.Fail(result.Error.Message)),
             "UNAUTHORIZED" => Unauthorized(ApiResponse<T>.Fail(result.Error.Message)),
             "CONFLICT" => Conflict(ApiResponse<T>.Fail(result.Error.Message)),
+            "NOT_IMPLEMENTED" => StatusCode(501, ApiResponse<T>.Fail(result.Error.Message)),
             _ => BadRequest(ApiResponse<T>.Fail(result.Error.Message))
         };
     }

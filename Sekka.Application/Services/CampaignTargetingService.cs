@@ -17,26 +17,26 @@ public class CampaignTargetingService : ICampaignTargetingService
     }
 
     public Task<Result<PagedResult<AdminCampaignDto>>> GetCampaignsAsync(CampaignFilterDto filter)
-        => Task.FromResult(Result<PagedResult<AdminCampaignDto>>.BadRequest(ErrorMessages.FeatureUnderDevelopment("الحملات التسويقية")));
+        => Task.FromResult(Result<PagedResult<AdminCampaignDto>>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("الحملات التسويقية")));
 
     public Task<Result<AdminCampaignDetailDto>> CreateAsync(CreateCampaignDto dto)
-        => Task.FromResult(Result<AdminCampaignDetailDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("إنشاء حملة")));
+        => Task.FromResult(Result<AdminCampaignDetailDto>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("إنشاء حملة")));
 
     public Task<Result<AdminCampaignDetailDto>> UpdateAsync(Guid id, UpdateCampaignDto dto)
-        => Task.FromResult(Result<AdminCampaignDetailDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("تعديل حملة")));
+        => Task.FromResult(Result<AdminCampaignDetailDto>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("تعديل حملة")));
 
     public Task<Result<bool>> DeleteAsync(Guid id)
-        => Task.FromResult(Result<bool>.BadRequest(ErrorMessages.FeatureUnderDevelopment("حذف حملة")));
+        => Task.FromResult(Result<bool>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("حذف حملة")));
 
     public Task<Result<bool>> LaunchAsync(Guid id)
-        => Task.FromResult(Result<bool>.BadRequest(ErrorMessages.FeatureUnderDevelopment("إطلاق حملة")));
+        => Task.FromResult(Result<bool>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("إطلاق حملة")));
 
     public Task<Result<bool>> PauseAsync(Guid id)
-        => Task.FromResult(Result<bool>.BadRequest(ErrorMessages.FeatureUnderDevelopment("إيقاف حملة")));
+        => Task.FromResult(Result<bool>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("إيقاف حملة")));
 
     public Task<Result<bool>> ResumeAsync(Guid id)
-        => Task.FromResult(Result<bool>.BadRequest(ErrorMessages.FeatureUnderDevelopment("استئناف حملة")));
+        => Task.FromResult(Result<bool>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("استئناف حملة")));
 
     public Task<Result<CampaignStatsDto>> GetStatsAsync()
-        => Task.FromResult(Result<CampaignStatsDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("إحصائيات الحملات")));
+        => Task.FromResult(Result<CampaignStatsDto>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("إحصائيات الحملات")));
 }

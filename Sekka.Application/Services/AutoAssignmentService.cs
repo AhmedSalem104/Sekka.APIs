@@ -24,12 +24,12 @@ public class AutoAssignmentService : IAutoAssignmentService
     public async Task<Result<List<SuggestedDriverDto>>> GetSuggestedDriversAsync(Guid orderId)
     {
         _logger.LogInformation("Suggested drivers requested for order {OrderId}", orderId);
-        return await Task.FromResult(Result<List<SuggestedDriverDto>>.BadRequest(ErrorMessages.FeatureUnderDevelopment("التعيين التلقائي")));
+        return await Task.FromResult(Result<List<SuggestedDriverDto>>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("التعيين التلقائي")));
     }
 
     public async Task<Result<OrderDto>> AutoAssignAsync(Guid orderId, AssignmentConfigDto config)
     {
         _logger.LogInformation("Auto-assign requested for order {OrderId}", orderId);
-        return await Task.FromResult(Result<OrderDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("التعيين التلقائي")));
+        return await Task.FromResult(Result<OrderDto>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("التعيين التلقائي")));
     }
 }

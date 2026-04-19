@@ -66,7 +66,7 @@ public class AccountManagementService : IAccountManagementService
         if (request == null)
             return Result<bool>.NotFound(ErrorMessages.NoPendingDeletionRequest);
 
-        if (request.ConfirmationCode != dto.ConfirmationCode)
+        if (request.ConfirmationCode != dto.OtpCode)
             return Result<bool>.BadRequest(ErrorMessages.InvalidConfirmationCode);
 
         // Mark deletion request as confirmed

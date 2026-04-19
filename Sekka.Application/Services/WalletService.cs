@@ -34,11 +34,14 @@ public class WalletService : IWalletService
         var settlements = await settlementRepo.ListAsync(pendingSpec);
         var pendingAmount = settlements.Sum(s => s.Amount);
 
+        var cashCollected = transactions.Where(t => t.TransactionType == TransactionType.OrderPayment).Sum(t => t.Amount);
+        var cashOnHand = cashCollected - pendingAmount;
+
         return Result<WalletBalanceDto>.Success(new WalletBalanceDto
         {
             DriverId = driverId,
             Balance = lastTx?.BalanceAfter ?? 0,
-            CashOnHand = transactions.Where(t => t.TransactionType == TransactionType.OrderPayment).Sum(t => t.Amount),
+            CashOnHand = cashOnHand,
             PendingSettlements = pendingAmount,
             LastUpdated = lastTx?.CreatedAt ?? DateTime.UtcNow
         });
@@ -93,11 +96,19 @@ public class WalletService : IWalletService
         if (driver == null)
             return Result<CashStatusDto>.NotFound(ErrorMessages.DriverNotFound);
 
+        // Calculate cashOnHand from ledger: cash collected - settlements
+        var txRepo = _unitOfWork.GetRepository<WalletTransaction, Guid>();
+        var txSpec = new DriverWalletTransactionsSpec(driverId);
+        var transactions = await txRepo.ListAsync(txSpec);
+        var cashCollected = transactions.Where(t => t.TransactionType == TransactionType.OrderPayment).Sum(t => t.Amount);
+
         var settlementRepo = _unitOfWork.GetRepository<Settlement, Guid>();
         var spec = new DriverSettlementsSpec(driverId);
         var settlements = await settlementRepo.ListAsync(spec);
+        var totalSettled = settlements.Sum(s => s.Amount);
         var lastSettlement = settlements.OrderByDescending(s => s.SettledAt).FirstOrDefault();
 
+        var cashOnHand = cashCollected - totalSettled;
         var hoursSince = lastSettlement != null
             ? (int)(DateTime.UtcNow - lastSettlement.SettledAt).TotalHours
             : 0;
@@ -105,9 +116,9 @@ public class WalletService : IWalletService
         return Result<CashStatusDto>.Success(new CashStatusDto
         {
             DriverId = driverId,
-            CashOnHand = driver.CashOnHand,
+            CashOnHand = cashOnHand,
             CashAlertThreshold = driver.CashAlertThreshold,
-            IsOverThreshold = driver.CashOnHand >= driver.CashAlertThreshold,
+            IsOverThreshold = cashOnHand >= driver.CashAlertThreshold,
             LastSettlementAt = lastSettlement?.SettledAt,
             HoursSinceLastSettlement = hoursSince
         });

@@ -26,7 +26,11 @@ public class ReferralStatsDto
 
 public class ApplyReferralCodeDto
 {
-    public string ReferralCode { get; set; } = null!;
+    public string? ReferralCode { get; set; }
+    public string? Code { get; set; }
+
+    /// <summary>Returns whichever field was sent (referralCode or code)</summary>
+    public string GetCode() => ReferralCode ?? Code ?? string.Empty;
 }
 
 public class ReferralDto

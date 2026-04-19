@@ -19,5 +19,5 @@ public class SurgePricingService : ISurgePricingService
     }
 
     public Task<Result<SurgeMultiplierDto>> CalculateMultiplierAsync(Guid regionId, DateTime dateTime)
-        => Task.FromResult(Result<SurgeMultiplierDto>.BadRequest(ErrorMessages.FeatureUnderDevelopment("التسعير الديناميكي")));
+        => Task.FromResult(Result<SurgeMultiplierDto>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("التسعير الديناميكي")));
 }

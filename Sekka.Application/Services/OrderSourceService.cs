@@ -67,7 +67,7 @@ public class OrderSourceService : IOrderSourceService
 
     public Task<Result<List<OrderSourceStatsDto>>> GetMonthlyStatsAsync(Guid driverId, int year, int month)
     {
-        return Task.FromResult(Result<List<OrderSourceStatsDto>>.BadRequest(ErrorMessages.FeatureUnderDevelopment("تقارير مصادر الطلبات")));
+        return Task.FromResult(Result<List<OrderSourceStatsDto>>.NotImplemented(ErrorMessages.FeatureUnderDevelopment("تقارير مصادر الطلبات")));
     }
 }
 

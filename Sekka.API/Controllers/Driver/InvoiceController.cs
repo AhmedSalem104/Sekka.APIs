@@ -38,7 +38,7 @@ public class InvoiceController : ControllerBase
 
     [HttpGet("{id:guid}/pdf")]
     public IActionResult DownloadPdf(Guid id)
-        => BadRequest(ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("تحميل PDF الفاتورة")));
+        => StatusCode(501, ApiResponse<object>.Fail(ErrorMessages.FeatureUnderDevelopment("تحميل PDF الفاتورة")));
 
     private IActionResult ToActionResult<T>(Result<T> result, int successCode = 200, string? message = null)
     {
@@ -50,6 +50,7 @@ public class InvoiceController : ControllerBase
             "NOT_FOUND" => NotFound(ApiResponse<T>.Fail(result.Error.Message)),
             "UNAUTHORIZED" => Unauthorized(ApiResponse<T>.Fail(result.Error.Message)),
             "CONFLICT" => Conflict(ApiResponse<T>.Fail(result.Error.Message)),
+            "NOT_IMPLEMENTED" => StatusCode(501, ApiResponse<T>.Fail(result.Error.Message)),
             _ => BadRequest(ApiResponse<T>.Fail(result.Error.Message))
         };
     }

@@ -9,7 +9,7 @@ public class DeleteAccountDto
 
 public class ConfirmDeletionDto
 {
-    public string ConfirmationCode { get; set; } = null!;
+    public string OtpCode { get; set; } = null!;
 }
 
 public class AccountDeletionRequestDto

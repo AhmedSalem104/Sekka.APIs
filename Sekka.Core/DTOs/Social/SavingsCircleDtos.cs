@@ -1,13 +1,23 @@
+using System.ComponentModel.DataAnnotations;
 using Sekka.Core.Enums;
 
 namespace Sekka.Core.DTOs.Social;
 
 public class CreateCircleDto
 {
+    [Required(ErrorMessage = "اسم الجمعية مطلوب")]
     public string Name { get; set; } = null!;
+
+    [Range(1, 1000000, ErrorMessage = "المبلغ الشهري لازم يكون أكبر من صفر")]
     public decimal MonthlyAmount { get; set; }
+
+    [Range(2, 100, ErrorMessage = "عدد الأعضاء لازم يكون 2 على الأقل")]
     public int MaxMembers { get; set; }
+
+    [Range(1, 120, ErrorMessage = "مدة الجمعية لازم تكون بين 1 و 120 شهر")]
     public int DurationMonths { get; set; }
+
+    [Range(0, 100, ErrorMessage = "الحد الأدنى للصحة المالية لازم يكون بين 0 و 100")]
     public int MinHealthScore { get; set; } = 80;
 }
 

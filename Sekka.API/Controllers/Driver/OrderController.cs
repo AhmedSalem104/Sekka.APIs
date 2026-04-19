@@ -209,12 +209,17 @@ public class OrderController : ControllerBase
         if (result.IsSuccess)
             return StatusCode(successCode, ApiResponse<T>.Success(result.Value!, message));
 
-        return result.Error!.Code switch
+        var errorResponse = result.Value is not null
+            ? new ApiResponse<T> { IsSuccess = false, Data = result.Value, Message = result.Error!.Message }
+            : ApiResponse<T>.Fail(result.Error!.Message);
+
+        return result.Error.Code switch
         {
-            "NOT_FOUND" => NotFound(ApiResponse<T>.Fail(result.Error.Message)),
-            "UNAUTHORIZED" => Unauthorized(ApiResponse<T>.Fail(result.Error.Message)),
-            "CONFLICT" => Conflict(ApiResponse<T>.Fail(result.Error.Message)),
-            _ => BadRequest(ApiResponse<T>.Fail(result.Error.Message))
+            "NOT_FOUND" => NotFound(errorResponse),
+            "UNAUTHORIZED" => Unauthorized(errorResponse),
+            "CONFLICT" => Conflict(errorResponse),
+            "NOT_IMPLEMENTED" => StatusCode(501, errorResponse),
+            _ => BadRequest(errorResponse)
         };
     }
 }

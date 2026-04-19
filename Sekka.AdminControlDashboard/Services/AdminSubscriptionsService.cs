@@ -35,13 +35,13 @@ public class AdminSubscriptionsService : IAdminSubscriptionsService
         => Task.FromResult(Result<AdminSubscriptionDto>.NotFound(ErrorMessages.SubscriptionNotFound));
 
     public Task<Result<AdminSubscriptionDto>> GiftSubscriptionAsync(GiftSubscriptionDto dto)
-        => Task.FromResult(Result<AdminSubscriptionDto>.BadRequest(ErrorMessages.SubscriptionsUnderDev));
+        => Task.FromResult(Result<AdminSubscriptionDto>.NotImplemented(ErrorMessages.SubscriptionsUnderDev));
 
     public Task<Result<List<SubscriptionPlanDto>>> GetPlansAsync()
         => Task.FromResult(Result<List<SubscriptionPlanDto>>.Success(new List<SubscriptionPlanDto>()));
 
     public Task<Result<SubscriptionPlanDto>> CreatePlanAsync(CreateSubscriptionPlanDto dto)
-        => Task.FromResult(Result<SubscriptionPlanDto>.BadRequest(ErrorMessages.PlansUnderDev));
+        => Task.FromResult(Result<SubscriptionPlanDto>.NotImplemented(ErrorMessages.PlansUnderDev));
 
     public Task<Result<SubscriptionPlanDto>> UpdatePlanAsync(Guid id, UpdateSubscriptionPlanDto dto)
         => Task.FromResult(Result<SubscriptionPlanDto>.NotFound(ErrorMessages.PlanNotFound));

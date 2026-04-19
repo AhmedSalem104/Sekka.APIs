@@ -47,6 +47,6 @@ public class DemoService : IDemoService
     public Task<Result<AuthResponseDto>> ConvertToRealAccountAsync(Guid sessionId, CompleteRegistrationDto dto)
     {
         // TODO: Convert demo session to real account
-        return Task.FromResult(Result<AuthResponseDto>.BadRequest(ErrorMessages.DemoConvertUnderDev));
+        return Task.FromResult(Result<AuthResponseDto>.NotImplemented(ErrorMessages.DemoConvertUnderDev));
     }
 }

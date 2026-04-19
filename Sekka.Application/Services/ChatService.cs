@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Sekka.Core.Common;
 using Sekka.Core.Common.Messages;
@@ -16,12 +17,14 @@ public class ChatService : IChatService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly UserManager<Driver> _userManager;
     private readonly ILogger<ChatService> _logger;
 
-    public ChatService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<ChatService> logger)
+    public ChatService(IUnitOfWork unitOfWork, IMapper mapper, UserManager<Driver> userManager, ILogger<ChatService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _userManager = userManager;
         _logger = logger;
     }
 
@@ -88,6 +91,7 @@ public class ChatService : IChatService
         var total = await messageRepo.CountAsync(countSpec);
 
         var dtos = _mapper.Map<List<ChatMessageDto>>(items);
+        await PopulateSenderNamesAsync(dtos);
         return Result<PagedResult<ChatMessageDto>>.Success(
             new PagedResult<ChatMessageDto>(dtos, total, pagination.Page, pagination.PageSize));
     }
@@ -125,7 +129,10 @@ public class ChatService : IChatService
 
         _logger.LogInformation("Message sent in conversation {ConversationId} by driver {DriverId}", conversationId, driverId);
 
-        return Result<ChatMessageDto>.Success(_mapper.Map<ChatMessageDto>(message));
+        var msgDto = _mapper.Map<ChatMessageDto>(message);
+        var driver = await _userManager.FindByIdAsync(driverId.ToString());
+        msgDto.SenderName = driver?.Name ?? "سائق";
+        return Result<ChatMessageDto>.Success(msgDto);
     }
 
     public async Task<Result<bool>> CloseConversationAsync(Guid driverId, Guid conversationId)
@@ -182,6 +189,22 @@ public class ChatService : IChatService
         var count = await messageRepo.CountAsync(spec);
 
         return Result<int>.Success(count);
+    }
+    private async Task PopulateSenderNamesAsync(List<ChatMessageDto> messages)
+    {
+        var senderIds = messages.Where(m => string.IsNullOrEmpty(m.SenderName) || m.SenderName == null!)
+            .Select(m => m.SenderId).Distinct().ToList();
+        var nameCache = new Dictionary<Guid, string>();
+        foreach (var id in senderIds)
+        {
+            var driver = await _userManager.FindByIdAsync(id.ToString());
+            nameCache[id] = driver?.Name ?? "مستخدم";
+        }
+        foreach (var msg in messages)
+        {
+            if (string.IsNullOrEmpty(msg.SenderName) && nameCache.TryGetValue(msg.SenderId, out var name))
+                msg.SenderName = name;
+        }
     }
 }
 

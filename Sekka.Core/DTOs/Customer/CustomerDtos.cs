@@ -64,5 +64,5 @@ public class CustomerEngagementDto
     public decimal EngagementScore { get; set; }
     public string Level { get; set; } = null!;
     public DateTime? LastInteraction { get; set; }
-    public int DaysSinceLastOrder { get; set; }
+    public int? DaysSinceLastOrder { get; set; }
 }
