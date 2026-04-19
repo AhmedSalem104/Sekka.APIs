@@ -1,6 +1,8 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Sekka.Core.Common;
 using Sekka.Core.Common.Messages;
 using Sekka.Core.DTOs.Common;
@@ -18,10 +20,12 @@ namespace Sekka.API.Controllers.Driver;
 public class ProfileController : ControllerBase
 {
     private readonly IProfileService _profileService;
+    private readonly UserManager<Sekka.Persistence.Entities.Driver> _userManager;
 
-    public ProfileController(IProfileService profileService)
+    public ProfileController(IProfileService profileService, UserManager<Sekka.Persistence.Entities.Driver> userManager)
     {
         _profileService = profileService;
+        _userManager = userManager;
     }
 
     private Guid GetDriverId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -128,6 +132,31 @@ public class ProfileController : ControllerBase
     [HttpPost("expenses")]
     public async Task<IActionResult> AddExpense([FromBody] CreateExpenseDto dto)
         => ToActionResult(await _profileService.AddExpenseAsync(GetDriverId(), dto), StatusCodes.Status201Created);
+
+    [HttpGet("/api/v{version:apiVersion}/drivers/by-phone/{phone}")]
+    public async Task<IActionResult> GetDriverByPhone(string phone)
+    {
+        var normalized = EgyptianPhoneHelper.Normalize(phone);
+        if (!EgyptianPhoneHelper.IsValid(normalized))
+            return BadRequest(ApiResponse<object>.Fail(ErrorMessages.InvalidEgyptianPhone));
+
+        var driver = await _userManager.Users
+            .Where(d => d.PhoneNumber == normalized)
+            .Select(d => new
+            {
+                d.Id,
+                d.Name,
+                d.VehicleType,
+                d.IsOnline,
+                ProfileImageUrl = d.ProfileImageUrl
+            })
+            .FirstOrDefaultAsync();
+
+        if (driver == null)
+            return NotFound(ApiResponse<object>.Fail("السواق غير مسجّل"));
+
+        return Ok(ApiResponse<object>.Success(driver));
+    }
 
     private IActionResult ToActionResult<T>(Result<T> result, int successCode = 200, string? message = null)
     {

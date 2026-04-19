@@ -1,0 +1,229 @@
+@page "/o/{shareToken}"
+@model Sekka.API.Pages.TrackModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>سكّة — تتبع الطلب</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: #f5f6fa;
+            color: #2d3436;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 480px;
+            width: 100%;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 24px 0;
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #6c5ce7;
+            margin-bottom: 4px;
+        }
+        .header p {
+            color: #636e72;
+            font-size: 14px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .card-title {
+            font-size: 14px;
+            color: #636e72;
+            margin-bottom: 12px;
+        }
+        .order-number {
+            font-size: 22px;
+            font-weight: bold;
+            color: #6c5ce7;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f2f6;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #636e72; font-size: 14px; }
+        .info-value { font-weight: 600; font-size: 14px; }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .status-pending { background: #fdcb6e; color: #2d3436; }
+        .status-accepted { background: #74b9ff; }
+        .status-pickedup { background: #a29bfe; }
+        .status-intransit { background: #6c5ce7; }
+        .status-delivered { background: #00b894; }
+        .status-failed { background: #d63031; }
+        .status-cancelled { background: #636e72; }
+        .timeline {
+            position: relative;
+            padding-right: 24px;
+        }
+        .timeline-item {
+            position: relative;
+            padding: 12px 20px 12px 0;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            right: -24px;
+            top: 18px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dfe6e9;
+            border: 2px solid #fff;
+            z-index: 1;
+        }
+        .timeline-item.completed::before { background: #00b894; }
+        .timeline-item.current::before { background: #6c5ce7; box-shadow: 0 0 0 4px rgba(108,92,231,0.2); }
+        .timeline-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -19px;
+            top: 30px;
+            width: 2px;
+            height: calc(100% - 12px);
+            background: #dfe6e9;
+        }
+        .timeline-item.completed:not(:last-child)::after { background: #00b894; }
+        .timeline-desc { font-size: 14px; font-weight: 600; }
+        .timeline-time { font-size: 12px; color: #636e72; margin-top: 2px; }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            margin-bottom: 10px;
+        }
+        .btn-primary { background: #6c5ce7; color: #fff; }
+        .btn-secondary { background: #dfe6e9; color: #2d3436; }
+        .error-card {
+            text-align: center;
+            padding: 48px 24px;
+        }
+        .error-icon { font-size: 48px; margin-bottom: 16px; }
+        .error-msg { font-size: 18px; color: #636e72; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>سكّة</h1>
+            <p>تتبع الطلب</p>
+        </div>
+
+        @if (Model.ErrorMessage != null)
+        {
+            <div class="card error-card">
+                <div class="error-icon">&#9888;</div>
+                <div class="error-msg">@Model.ErrorMessage</div>
+            </div>
+            <a href="https://play.google.com/store/apps/details?id=app.sekka.driver" class="btn btn-secondary">حمّل التطبيق</a>
+        }
+        else if (Model.TrackingData != null)
+        {
+            var data = Model.TrackingData;
+            var statusClass = data.Status switch
+            {
+                Sekka.Core.Enums.OrderStatus.Pending => "status-pending",
+                Sekka.Core.Enums.OrderStatus.Accepted => "status-accepted",
+                Sekka.Core.Enums.OrderStatus.PickedUp => "status-pickedup",
+                Sekka.Core.Enums.OrderStatus.InTransit => "status-intransit",
+                Sekka.Core.Enums.OrderStatus.Delivered => "status-delivered",
+                Sekka.Core.Enums.OrderStatus.Failed => "status-failed",
+                _ => "status-cancelled"
+            };
+            var statusText = data.Status switch
+            {
+                Sekka.Core.Enums.OrderStatus.Pending => "في الانتظار",
+                Sekka.Core.Enums.OrderStatus.Accepted => "تم القبول",
+                Sekka.Core.Enums.OrderStatus.PickedUp => "تم الاستلام",
+                Sekka.Core.Enums.OrderStatus.InTransit => "في الطريق",
+                Sekka.Core.Enums.OrderStatus.Delivered => "تم التسليم",
+                Sekka.Core.Enums.OrderStatus.Failed => "فشل التسليم",
+                _ => "ملغي"
+            };
+
+            <div class="card">
+                <div class="card-title">رقم الطلب</div>
+                <div class="order-number">#@data.OrderNumber</div>
+                <div style="margin-top: 12px;">
+                    <span class="status-badge @statusClass">@statusText</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="info-row">
+                    <span class="info-label">السائق</span>
+                    <span class="info-value">@(data.DriverName ?? "—")</span>
+                </div>
+                @if (!string.IsNullOrEmpty(data.PickupAddress))
+                {
+                    <div class="info-row">
+                        <span class="info-label">من</span>
+                        <span class="info-value">@data.PickupAddress</span>
+                    </div>
+                }
+                <div class="info-row">
+                    <span class="info-label">إلى</span>
+                    <span class="info-value">@data.DeliveryAddress</span>
+                </div>
+            </div>
+
+            @if (data.Timeline?.Any() == true)
+            {
+                <div class="card">
+                    <div class="card-title">مراحل الطلب</div>
+                    <div class="timeline">
+                        @foreach (var step in data.Timeline)
+                        {
+                            var cls = step.IsCurrent ? "current" : step.IsCompleted ? "completed" : "";
+                            <div class="timeline-item @cls">
+                                <div class="timeline-desc">@step.Description</div>
+                                @if (step.IsCompleted || step.IsCurrent)
+                                {
+                                    <div class="timeline-time">@step.Timestamp.ToString("hh:mm tt")</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <a href="sekka://order/@data.OrderNumber" class="btn btn-primary">افتح في التطبيق</a>
+            <a href="https://play.google.com/store/apps/details?id=app.sekka.driver" class="btn btn-secondary">حمّل التطبيق</a>
+        }
+    </div>
+</body>
+</html>

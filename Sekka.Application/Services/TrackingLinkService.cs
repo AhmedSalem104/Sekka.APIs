@@ -73,6 +73,56 @@ public class TrackingLinkService : ITrackingLinkService
         return Result<TrackingPageDto>.Success(dto);
     }
 
+    public async Task<Result<ShareLinkDto>> CreateShareLinkAsync(Guid driverId, Guid orderId, int? ttlMinutes = null)
+    {
+        var orderRepo = _unitOfWork.GetRepository<Order, Guid>();
+        var order = await orderRepo.GetByIdAsync(orderId);
+
+        if (order == null || order.DriverId != driverId)
+            return Result<ShareLinkDto>.NotFound(ErrorMessages.OrderNotFound);
+
+        var ttl = ttlMinutes ?? 60;
+        var trackingCode = Guid.NewGuid().ToString("N")[..12];
+
+        var link = new TrackingLink
+        {
+            OrderId = orderId,
+            TrackingCode = trackingCode,
+            IsActive = true,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(ttl)
+        };
+
+        var repo = _unitOfWork.GetRepository<TrackingLink, Guid>();
+
+        // Deactivate existing links for this order
+        var existingSpec = new TrackingLinkByOrderSpec(orderId);
+        var existingLinks = await repo.ListAsync(existingSpec);
+        foreach (var existing in existingLinks)
+        {
+            existing.IsActive = false;
+            repo.Update(existing);
+        }
+
+        await repo.AddAsync(link);
+        await _unitOfWork.SaveChangesAsync();
+
+        var shareUrl = $"https://sekka.app/o/{trackingCode}";
+        var customerName = order.CustomerName ?? "العميل";
+        var messageTemplate = $"أوردر #{order.OrderNumber} لـ {customerName} — {order.DeliveryAddress}\nالمبلغ: {order.Amount} جنيه\nتتبع الأوردر: {shareUrl}";
+
+        var dto = new ShareLinkDto
+        {
+            ShareToken = trackingCode,
+            ShareUrl = shareUrl,
+            ExpiresAt = link.ExpiresAt,
+            MessageTemplate = messageTemplate
+        };
+
+        _logger.LogInformation("Share link created for order {OrderId}: {TrackingCode}", orderId, trackingCode);
+
+        return Result<ShareLinkDto>.Success(dto);
+    }
+
     private static List<TrackingTimelineDto> BuildTrackingTimeline(Order order)
     {
         var timeline = new List<TrackingTimelineDto>();
@@ -124,5 +174,13 @@ internal class TrackingLinkByCodeSpec : BaseSpecification<TrackingLink>
     public TrackingLinkByCodeSpec(string trackingCode)
     {
         SetCriteria(t => t.TrackingCode == trackingCode);
+    }
+}
+
+internal class TrackingLinkByOrderSpec : BaseSpecification<TrackingLink>
+{
+    public TrackingLinkByOrderSpec(Guid orderId)
+    {
+        SetCriteria(t => t.OrderId == orderId && t.IsActive);
     }
 }

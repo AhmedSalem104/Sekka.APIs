@@ -44,8 +44,8 @@ public class OrderTransferService : IOrderTransferService
             FromDriverId = driverId,
             ToDriverId = dto.ToDriverId,
             TransferReason = dto.Reason,
-            DeepLinkToken = dto.ToDriverId == null ? Guid.NewGuid().ToString("N")[..16] : null,
-            Status = dto.ToDriverId.HasValue ? TransferStatus.Pending : TransferStatus.Pending,
+            DeepLinkToken = Guid.NewGuid().ToString("N")[..16],
+            Status = TransferStatus.Pending,
             TransferredAt = DateTime.UtcNow
         };
 

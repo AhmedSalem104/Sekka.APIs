@@ -146,6 +146,7 @@ public class ApplicationMappingProfile : Profile
         CreateMap<SavingsCirclePayment, Core.DTOs.Social.CirclePaymentDto>();
         CreateMap<FieldAssistanceRequest, Core.DTOs.Social.HelpRequestDto>();
         CreateMap<RoadReport, Core.DTOs.Social.RoadReportDto>();
+        CreateMap<FavoriteDriver, Core.DTOs.Social.FavoriteDriverDto>();
     }
 
     private static List<string> BuildPositiveTags(Rating r)

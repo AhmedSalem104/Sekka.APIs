@@ -92,6 +92,13 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> Transfer(Guid id, [FromBody] TransferOrderDto dto)
         => ToActionResult(await _transferService.TransferAsync(GetDriverId(), id, dto), message: SuccessMessages.OrderTransferred);
 
+    [HttpPost("{id:guid}/share-link")]
+    public async Task<IActionResult> CreateShareLink(Guid id, [FromQuery] int? ttlMinutes = null)
+    {
+        var trackingService = HttpContext.RequestServices.GetRequiredService<ITrackingLinkService>();
+        return ToActionResult(await trackingService.CreateShareLinkAsync(GetDriverId(), id, ttlMinutes), StatusCodes.Status201Created);
+    }
+
     [HttpPost("{id:guid}/partial")]
     public async Task<IActionResult> PartialDeliver(Guid id, [FromBody] PartialDeliveryDto dto)
         => ToActionResult(await _orderService.PartialDeliverAsync(GetDriverId(), id, dto), message: SuccessMessages.OrderPartialDelivery);

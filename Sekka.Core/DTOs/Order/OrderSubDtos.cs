@@ -67,6 +67,14 @@ public class SwapAddressDto
     public string? Reason { get; set; }
 }
 
+public class ShareLinkDto
+{
+    public string ShareToken { get; set; } = null!;
+    public string ShareUrl { get; set; } = null!;
+    public DateTime ExpiresAt { get; set; }
+    public string MessageTemplate { get; set; } = null!;
+}
+
 public class OrderTransferResponseDto
 {
     public Guid Id { get; set; }

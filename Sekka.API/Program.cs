@@ -207,6 +207,7 @@ builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<ISavingsCircleService, SavingsCircleService>();
 builder.Services.AddScoped<IColleagueRadarService, ColleagueRadarService>();
 builder.Services.AddScoped<IRoadReportService, RoadReportService>();
+builder.Services.AddScoped<IFavoriteDriverService, FavoriteDriverService>();
 
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
@@ -299,6 +300,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Sekka.Core.Validators.Auth.
 // ══════════════════════════════════════════════════════════════
 // 14. Swagger + Controllers
 // ══════════════════════════════════════════════════════════════
+builder.Services.AddRazorPages();
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
     {
@@ -414,6 +416,7 @@ app.UseRateLimiter();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.MapControllers();
+app.MapRazorPages();
 
 // Health Checks
 app.MapHealthChecks("/health");

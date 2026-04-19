@@ -98,6 +98,7 @@ public class SekkaDbContext : IdentityDbContext<Driver, IdentityRole<Guid>, Guid
     public DbSet<FieldAssistanceRequest> FieldAssistanceRequests => Set<FieldAssistanceRequest>();
     public DbSet<RoadReport> RoadReports => Set<RoadReport>();
     public DbSet<RoadReportConfirmation> RoadReportConfirmations => Set<RoadReportConfirmation>();
+    public DbSet<FavoriteDriver> FavoriteDrivers => Set<FavoriteDriver>();
 
     // Phase 8: Admin & System
     public DbSet<Region> Regions => Set<Region>();

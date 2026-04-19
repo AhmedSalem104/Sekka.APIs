@@ -81,4 +81,5 @@ public class Driver : IdentityUser<Guid>
     public ICollection<SavingsCircleMember> SavingsCircleMemberships { get; set; } = new List<SavingsCircleMember>();
     public ICollection<FieldAssistanceRequest> FieldAssistanceRequestsSent { get; set; } = new List<FieldAssistanceRequest>();
     public ICollection<RoadReport> RoadReports { get; set; } = new List<RoadReport>();
+    public ICollection<FavoriteDriver> FavoriteDrivers { get; set; } = new List<FavoriteDriver>();
 }
