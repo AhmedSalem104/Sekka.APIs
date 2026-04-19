@@ -211,7 +211,8 @@ builder.Services.AddScoped<IRoadReportService, RoadReportService>();
 // ══════════════════════════════════════════════════════════════
 // 7. Background Services
 // ══════════════════════════════════════════════════════════════
-builder.Services.AddHostedService<Sekka.Application.BackgroundServices.StaleOrderCleanupService>();
+// DISABLED: Orders should stay as-is until the driver manually changes status
+// builder.Services.AddHostedService<Sekka.Application.BackgroundServices.StaleOrderCleanupService>();
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.CashAlertBackgroundService>();
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.DailyStatisticsService>();
 builder.Services.AddHostedService<Sekka.Application.BackgroundServices.RoadReportCleanupService>();
