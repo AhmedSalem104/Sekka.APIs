@@ -85,3 +85,25 @@ public class OrderTransferResponseDto
     public TransferStatus Status { get; set; }
     public DateTime TransferredAt { get; set; }
 }
+
+public class TransferRequestDto
+{
+    public Guid Id { get; set; }
+    public Guid OrderId { get; set; }
+    public string OrderNumber { get; set; } = null!;
+    public string? CustomerName { get; set; }
+    public string? DeliveryAddress { get; set; }
+    public decimal Amount { get; set; }
+    public string FromDriverName { get; set; } = null!;
+    public string? ToDriverName { get; set; }
+    public string? TransferReason { get; set; }
+    public TransferStatus Status { get; set; }
+    public DateTime TransferredAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+    public int RemainingMinutes { get; set; }
+}
+
+public class RejectTransferDto
+{
+    public string? Reason { get; set; }
+}

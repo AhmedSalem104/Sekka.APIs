@@ -11,6 +11,7 @@ public class OrderTransferLog : BaseEntity<Guid>
     public string? TransferReason { get; set; }
     public string? DeepLinkToken { get; set; }
     public TransferStatus Status { get; set; }
+    public OrderStatus? PreviousOrderStatus { get; set; }
     public DateTime TransferredAt { get; set; } = DateTime.UtcNow;
     public DateTime? AcceptedAt { get; set; }
 

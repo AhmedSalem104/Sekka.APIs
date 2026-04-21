@@ -11,5 +11,6 @@ public enum OrderStatus
     Cancelled = 6,
     Returned = 7,
     PartialDelivery = 8,
-    Postponed = 9
+    Postponed = 9,
+    PendingTransfer = 10
 }

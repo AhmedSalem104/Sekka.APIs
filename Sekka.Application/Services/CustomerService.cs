@@ -169,6 +169,14 @@ public class CustomerService : ICustomerService
         customer.IsBlocked = false;
         customer.BlockReason = null;
         customerRepo.Update(customer);
+
+        // Remove BlockedCustomer record to avoid unique constraint violation on re-block
+        var blockedRepo = _unitOfWork.GetRepository<BlockedCustomer, Guid>();
+        var blockedSpec = new BlockedCustomerByDriverAndCustomerSpec(driverId, customer.Phone);
+        var blockedEntries = await blockedRepo.ListAsync(blockedSpec);
+        foreach (var entry in blockedEntries)
+            blockedRepo.Delete(entry);
+
         await _unitOfWork.SaveChangesAsync();
 
         _logger.LogInformation("Customer {CustomerId} unblocked by driver {DriverId}", customerId, driverId);
@@ -281,5 +289,13 @@ internal class RatingsByCustomerSpec : BaseSpecification<Rating>
     public RatingsByCustomerSpec(Guid driverId, Guid customerId)
     {
         SetCriteria(r => r.DriverId == driverId && r.CustomerId == customerId);
+    }
+}
+
+internal class BlockedCustomerByDriverAndCustomerSpec : BaseSpecification<BlockedCustomer>
+{
+    public BlockedCustomerByDriverAndCustomerSpec(Guid driverId, string customerPhone)
+    {
+        SetCriteria(b => b.DriverId == driverId && b.CustomerPhone == customerPhone);
     }
 }

@@ -92,6 +92,26 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> Transfer(Guid id, [FromBody] TransferOrderDto dto)
         => ToActionResult(await _transferService.TransferAsync(GetDriverId(), id, dto), message: SuccessMessages.OrderTransferred);
 
+    [HttpGet("transfer-requests/incoming")]
+    public async Task<IActionResult> GetIncomingTransfers()
+        => ToActionResult(await _transferService.GetIncomingAsync(GetDriverId()));
+
+    [HttpGet("transfer-requests/outgoing")]
+    public async Task<IActionResult> GetOutgoingTransfers()
+        => ToActionResult(await _transferService.GetOutgoingAsync(GetDriverId()));
+
+    [HttpPost("transfer-requests/{id:guid}/accept")]
+    public async Task<IActionResult> AcceptTransfer(Guid id)
+        => ToActionResult(await _transferService.AcceptAsync(GetDriverId(), id), message: "تم قبول التحويل بنجاح");
+
+    [HttpPost("transfer-requests/{id:guid}/reject")]
+    public async Task<IActionResult> RejectTransfer(Guid id, [FromBody] RejectTransferDto? dto = null)
+        => ToActionResult(await _transferService.RejectAsync(GetDriverId(), id, dto?.Reason), message: "تم رفض التحويل");
+
+    [HttpPost("transfer-requests/{id:guid}/cancel")]
+    public async Task<IActionResult> CancelTransfer(Guid id)
+        => ToActionResult(await _transferService.CancelAsync(GetDriverId(), id), message: "تم إلغاء طلب التحويل");
+
     [HttpPost("{id:guid}/share-link")]
     public async Task<IActionResult> CreateShareLink(Guid id, [FromQuery] int? ttlMinutes = null)
     {
